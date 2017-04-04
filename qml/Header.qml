@@ -3,8 +3,7 @@ import QtQuick.Controls 1.5
 import QtQuick.Layouts 1.3
 
 Item {
-    height: 265
-
+    height: 290
     Image {
         id: headerBG
         x: 0
@@ -42,7 +41,7 @@ Item {
             color: "#ffffff"
             text: qsTr("Schwabens ältester Schwimmverein")
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 5
+            anchors.bottomMargin: 20
             font.pointSize: 24
         }
     }
@@ -51,6 +50,7 @@ Item {
         id: blackLine
         height: 10
         color: "#3f3f3f"
+        anchors.topMargin: -20
         anchors.top: headerBG.bottom
         anchors.right: parent.right
         anchors.left: parent.left
@@ -58,10 +58,20 @@ Item {
 
     Rectangle {
         id: whiteLine
-        height: 30
+        height: 75
         color: "#ffffff"
         anchors.top: blackLine.bottom
         anchors.right: parent.right
         anchors.left: parent.left
+
+        Label {
+            id: title
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            color: "#3f3f3f"
+            text: qsTr("Ammerseeschwimmen")
+            font.pointSize: 32
+            font.bold: true
+        }
     }
 }

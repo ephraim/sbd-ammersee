@@ -13,3 +13,8 @@ QML_IMPORT_PATH =
 
 # Default rules for deployment.
 include(deployment.pri)
+
+execute.commands = ./ammersee
+execute.depends = "$(TARGET)"
+
+QMAKE_EXTRA_TARGETS += execute
