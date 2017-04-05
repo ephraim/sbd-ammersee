@@ -10,17 +10,22 @@ Item {
     property alias theDb: root.db
 
     function insertEvent(id, name) {
-        events.append({ id: id, name: name });
+        eventsView.modelEvents.append({ id: id, name: name });
     }
 
     function openEvent(id) {
+        content.state = "";
         root.db.transaction(function(tx) {
-            teilnehmer.clear();
+            teilnehmerView.modelTeilnehmer.clear();
             var rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + id + "'");
             if (rs.rows.length > 0)
                 for(var i = 0; i < rs.rows.length; i++)
-                    teilnehmer.append(rs.rows.item(i));
-        })
+                    teilnehmerView.modelTeilnehmer.append(rs.rows.item(i));
+        });
+    }
+
+    function showAddEvent() {
+        content.state = "addEvent";
     }
 
     Rectangle {
@@ -28,6 +33,7 @@ Item {
         color: "#2c5a85"
 
         Rectangle {
+            id: content
             width: parent.width / 100 * 75
             color: "#ffffff"
             anchors.top: parent.top
@@ -35,86 +41,46 @@ Item {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
 
-            ListModel {
-                id: events
-            }
-            ListModel {
-                id: teilnehmer
-            }
-
-            Component {
-                id: delegateEvent
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: 5
-                    anchors.rightMargin: 5
-                    width: parent.width
-                    text: name
-                    font.pixelSize: 24
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: openEvent(id)
-                    }
-                }
-            }
-
-            Rectangle {
-                id: rectEvents
+            EventsView {
+                id: eventsView
                 border.width: 1
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.margins: 10
                 width: 150
-                ListView {
-                    spacing: 2
-                    clip: true
-                    anchors.fill: parent
-                    model: events
-                    delegate: delegateEvent
-                }
             }
 
-            Rectangle {
-                id: rectTeilnehmer
+            TeilnehmerListView {
+                id: teilnehmerView
                 border.width: 1
                 anchors.top: parent.top
                 anchors.leftMargin: 5
-                anchors.left: rectEvents.right
+                anchors.left: eventsView.right
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.margins: 10
-                ListView {
-                    spacing: 2
-                    clip: true
-                    anchors.topMargin: 5
-                    anchors.bottomMargin: 5
-                    anchors.fill: parent
-                    model: teilnehmer
-                    delegate: Component {
-                        id: delegateTeilnehmer
-                        Rectangle {
-                            height: 45
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.leftMargin: 5
-                            anchors.rightMargin: 5
-                            width: parent.width
-                            Text {
-                                id: name
-                                text: Nachname + " " + Vorname
-                                font.pixelSize: 24
-                            }
-                            Text {
-                                anchors.top: name.bottom
-                                text: Gender == "m" ? "männlich" : "weiblich"
-                                font.pixelSize: 12
-                            }
-                        }
-                    }
-                }
             }
+
+            AddEventForm {
+                id: addEventForm
+                border.width: 1
+                anchors.top: parent.top
+                anchors.leftMargin: 5
+                anchors.left: eventsView.right
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 10
+                visible: false
+            }
+
+            states: [
+                State {
+                    name: "addEvent"
+                    PropertyChanges { target: teilnehmerView; visible: false }
+                    PropertyChanges { target: addEventForm;   visible: true }
+                }
+            ]
         }
     }
 }
