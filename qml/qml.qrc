@@ -1,13 +1,13 @@
 <RCC>
-    <qresource prefix="">
-        <file>main.qml</file>
-        <file>Header.qml</file>
-        <file>Mainform.qml</file>
-        <file>TeilnehmerListView.qml</file>
-        <file>EventsView.qml</file>
-        <file>AddEventForm.qml</file>
-        <file>images/headerbg.png</file>
-        <file>images/headeroverlay.png</file>
-        <file>images/logo.png</file>
-    </qresource>
+	<qresource prefix="">
+		<file>main.qml</file>
+		<file>Header.qml</file>
+		<file>Mainform.qml</file>
+		<file>TeilnehmerListView.qml</file>
+		<file>EventsView.qml</file>
+		<file>AddEventForm.qml</file>
+		<file>images/headerbg.png</file>
+		<file>images/headeroverlay.png</file>
+		<file>images/logo.png</file>
+	</qresource>
 </RCC>
