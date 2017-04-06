@@ -5,6 +5,22 @@ Rectangle {
 	id: root
 	property var mainForm
 
+	Component.onCompleted: {
+		spc.onFoundTag.connect(function(result, tagID) {
+			if(result) {
+				eventTag.text = tagID;
+				spc.beep();
+			}
+			else {
+				eventTag.text = "";
+				spc.switchLED(0x01, true);
+				spc.beep();
+				spc.beep();
+				spc.switchLED(0x01, false);
+			}
+			spc.switchLED(0x02, false);
+		});
+	}
 	Text {
 		id: heading
 		anchors.topMargin: 50
@@ -15,19 +31,18 @@ Rectangle {
 	}
 
 	Row {
-		id: entry
+		id: nameEntry
 		anchors.topMargin: 100
 		anchors.top: heading.bottom
 		anchors.horizontalCenter: parent.horizontalCenter
 		height: 24
 		spacing: 2
-		Rectangle {
+		width: 400
+		Text {
 			width: 100
 			height: parent.height
-			Text {
-				anchors.verticalCenter: parent.verticalCenter
-				text: "Event Name:"
-			}
+			anchors.verticalCenter: parent.verticalCenter
+			text: "Event Name:"
 		}
 		TextField {
 			id: eventName
@@ -38,11 +53,47 @@ Rectangle {
 		}
 	}
 	Row {
+		id: tagEntry
 		anchors.topMargin: 10
-		anchors.top: entry.bottom
+		anchors.top: nameEntry.bottom
 		anchors.horizontalCenter: parent.horizontalCenter
-		width: entry.width
-		height: entry.height
+		width: nameEntry.width
+		height: nameEntry.height
+		spacing: 2
+		Text {
+			width: 100
+			height: parent.height
+			anchors.verticalCenter: parent.verticalCenter
+			text: "TagID:"
+		}
+		TextField {
+			id: eventTag
+			width: eventName.width - btnSearchTag.width
+			height: parent.height
+			verticalAlignment: TextEdit.AlignVCenter
+			anchors.verticalCenter: parent.verticalCenter
+			anchors.right: btnSearchTag.left
+		}
+		Button {
+			id: btnSearchTag
+			width: 50
+			height: parent.height
+			anchors.right: parent.right
+			text: "..."
+			onClicked: function() {
+				var tagId;
+				spc.switchLED(0x02, true);
+				spc.beep();
+				spc.searchTag();
+			}
+		}
+	}
+	Row {
+		anchors.topMargin: 10
+		anchors.top: tagEntry.bottom
+		anchors.horizontalCenter: parent.horizontalCenter
+		width: nameEntry.width
+		height: nameEntry.height
 		Button {
 			anchors.right: parent.right
 			text: "add"

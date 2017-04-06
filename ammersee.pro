@@ -4,9 +4,11 @@ QT += qml quick widgets
 
 CONFIG += c++11 debug
 
-SOURCES += src/main.cpp
+SOURCES += src/main.cpp src/serial.cpp src/simpleproto.cpp src/misc.cpp
+HEADERS += src/serial.h src/simpleproto.h src/qsimpleproto.h src/misc.h src/twn4.sys.h
 
 RESOURCES += qml/qml.qrc
+DEFINES += MAKEFIRMWARE
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
