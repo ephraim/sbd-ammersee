@@ -40,7 +40,6 @@ Item {
 			EventsView {
 				id: eventsView
 				mainForm: root
-				border.width: 1
 				anchors.top: parent.top
 				anchors.left: parent.left
 				anchors.bottom: parent.bottom
