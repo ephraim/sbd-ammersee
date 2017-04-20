@@ -11,13 +11,7 @@ Item {
 
 	function openEvent(id) {
 		content.state = "";
-		db.transaction(function(tx) {
-			teilnehmerView.modelTeilnehmer.clear();
-			var rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + id + "'");
-			if (rs.rows.length > 0)
-				for(var i = 0; i < rs.rows.length; i++)
-					teilnehmerView.modelTeilnehmer.append(rs.rows.item(i));
-		});
+		eventView.eventId = id;
 	}
 
 	function showAddEvent() {
@@ -36,6 +30,7 @@ Item {
 			anchors.topMargin: 50
 			anchors.bottom: parent.bottom
 			anchors.horizontalCenter: parent.horizontalCenter
+			radius: 5
 
 			EventsView {
 				id: eventsView
@@ -47,12 +42,20 @@ Item {
 				width: 150
 			}
 
-			TeilnehmerListView {
-				id: teilnehmerView
-				border.width: 1
+			Rectangle {
+				id: seperator
+				color: "#2c5a85"
+				width: 4
+				anchors.top: parent.top
+				anchors.bottom: parent.bottom
+				anchors.left: eventsView.right
+			}
+
+			EventView {
+				id: eventView
 				anchors.top: parent.top
 				anchors.leftMargin: 5
-				anchors.left: eventsView.right
+				anchors.left: seperator.right
 				anchors.right: parent.right
 				anchors.bottom: parent.bottom
 				anchors.margins: 10
@@ -61,7 +64,6 @@ Item {
 			AddEventForm {
 				id: addEventForm
 				mainForm: root
-				border.width: 1
 				anchors.top: parent.top
 				anchors.leftMargin: 5
 				anchors.left: eventsView.right
@@ -74,8 +76,8 @@ Item {
 			states: [
 				State {
 					name: "addEvent"
-					PropertyChanges { target: teilnehmerView; visible: false }
-					PropertyChanges { target: addEventForm;   visible: true }
+					PropertyChanges { target: eventView;	visible: false }
+					PropertyChanges { target: addEventForm;	visible: true }
 				}
 			]
 		}

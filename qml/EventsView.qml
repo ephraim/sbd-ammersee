@@ -8,10 +8,11 @@ Rectangle {
 		mainForm.db.transaction(function(tx) {
 			events.clear();
 			var rs = tx.executeSql("SELECT * FROM Event ORDER BY EventName");
-			for(var i = 0; i < rs.rows.length; i++) {
-				events.append({ id: rs.rows.item(i).ID, name: rs.rows.item(i).EventName });
-			}
+			for(var i = 0; i < rs.rows.length; i++)
+				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName });
 		});
+		eventsList.currentIndex = 0;
+		openEvent(events.get(eventsList.currentIndex).eventid);
 	}
 
 	ListModel {
@@ -19,70 +20,150 @@ Rectangle {
 	}
 
 	ListView {
+		id: eventsList
 		spacing: 2
 		clip: true
 		anchors.fill: parent
+		anchors.rightMargin: 5
 		model: events
 		delegate: Component {
-			Text {
+			Item {
+				id: delegate
 				anchors.left: parent.left
 				anchors.right: parent.right
-				anchors.leftMargin: 5
-				anchors.rightMargin: 5
-				width: parent.width
-				text: name
-				font.pixelSize: 24
-				MouseArea {
+				height: 27
+
+				Rectangle {
+					id: hoverHighlight
 					anchors.fill: parent
-					onClicked: openEvent(id)
+					radius: 5
+					color: "#5c8ab5"
+					state: "invisible"
+					states: [
+						State {
+							name: "visible"
+							PropertyChanges { target: hoverHighlight; opacity: 1.0  }
+							PropertyChanges { target: hoverHighlight; visible: true }
+						},
+						State {
+							name: "invisible"
+							PropertyChanges { target: hoverHighlight; opacity: 0  }
+							PropertyChanges { target: hoverHighlight; visible: false }
+						}
+					]
+					transitions: [
+						Transition {
+							from: "visible"
+							to: "invisible"
+							SequentialAnimation {
+								NumberAnimation {
+									target: hoverHighlight
+									property: "opacity"
+									duration: 1000
+									easing.type: Easing.InOutQuad
+								}
+								NumberAnimation {
+									target: hoverHighlight
+									property: "visible"
+									duration: 0
+								}
+							}
+						}
+					]
+				}
+
+				Text {
+					id: delegateContent
+					anchors.fill: parent
+					anchors.leftMargin: 5
+					anchors.rightMargin: 5
+					text: name.length > 10 ? name.substr(0, 3) + " .. " + name.substr(-3) : name
+					font.pixelSize: 24
+					color: delegate.ListView.isCurrentItem ? "white" : ""
+				}
+
+				MouseArea {
+					hoverEnabled: true
+					anchors.fill: parent
+					onClicked: {
+						if(eventsList.currentItem)
+							eventsList.currentItem.children[1].color = "";
+						eventsList.currentIndex = index;
+						delegateContent.color   = "white";
+						hoverHighlight.state    = "invisible";
+						openEvent(eventid);
+					}
+					onEntered: {
+						if(!delegate.ListView.isCurrentItem) {
+							delegateContent.color  = "white";
+							hoverHighlight.state   = "visible";
+						}
+					}
+					onExited: {
+						if(!delegate.ListView.isCurrentItem) {
+							delegateContent.color  = "";
+							hoverHighlight.state   = "";
+							hoverHighlight.state   = "invisible";
+						}
+					}
 				}
 			}
 		}
+		highlight: Component {
+			Rectangle {
+				width: eventsList.currentItem.width;
+				height: eventsList.currentItem.height
+				color: "#2c5a85"
+				radius: 5
+				y: eventsList.currentItem.y
+				Behavior on y {
+					SmoothedAnimation {
+						duration: 1000
+					}
+				}
+			}
+		}
+		highlightFollowsCurrentItem: false
+		focus: true
 		headerPositioning: ListView.OverlayHeader
 		header: Component {
-			Rectangle {
-				height: text01.height + 2
-				anchors.left: parent.left
-				anchors.right: parent.right
-				Text {
-					id: text01
-					anchors.top: parent.top
-					anchors.left: parent.left
-					anchors.right: parent.right
-					text: "Events"
-					font.pixelSize: 24
-					font.weight: Font.Bold
-				}
-				Rectangle {
-					anchors.left: parent.left
-					anchors.right: parent.right
-					anchors.bottom: parent.bottom
-					height: 2
-					border.width: 1
-				}
+			Text {
+				height: 50
+				text: "Events"
+				font.pixelSize: 24
+				font.weight: Font.Bold
 			}
 		}
 		footerPositioning: ListView.OverlayFooter
 		footer: Component {
 			Rectangle {
-				height: btn01.height + 2
+				height: 50
 				anchors.left: parent.left
 				anchors.right: parent.right
 				Rectangle {
-					anchors.left: parent.left
 					anchors.right: parent.right
-					anchors.top: parent.top
-					height: 2
-					border.width: 1
-				}
-				Button {
-					id: btn01
-					anchors.right: parent.right
-					anchors.rightMargin: 5
 					anchors.bottom: parent.bottom
-					text: "+"
-					width: 25
-					onClicked: showAddEvent()
+					color: "#2c5a85"
+					height: 30
+					radius: 5
+					width: 50
+					Text {
+						anchors.centerIn: parent
+						text: "+"
+						font.pixelSize: 20
+						color: "white"
+					}
+					MouseArea {
+						hoverEnabled: true
+						anchors.fill: parent
+						onClicked: {
+							eventsList.currentItem.children[1].color = ""
+							eventsList.currentIndex = -1;
+							showAddEvent();
+						}
+						onEntered: parent.color = "#5c8ab5"
+						onExited: parent.color = "#2c5a85"
+					}
 				}
 			}
 		}

@@ -28,6 +28,7 @@ Rectangle {
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: "Event hinzufügen"
 		font.pixelSize: 32
+		font.weight: Font.Bold
 	}
 
 	Row {

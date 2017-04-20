@@ -2,7 +2,7 @@ import QtQuick 2.6
 import QtQuick.Controls 1.5
 
 Rectangle {
-	property alias modelTeilnehmer: teilnehmer
+	property alias teilnehmer: teilnehmer
 
 	ListModel {
 		id: teilnehmer
