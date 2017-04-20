@@ -42,7 +42,6 @@ Rectangle {
 		Text {
 			width: 100
 			height: parent.height
-			anchors.verticalCenter: parent.verticalCenter
 			text: "Event Name:"
 		}
 		TextField {
@@ -64,7 +63,6 @@ Rectangle {
 		Text {
 			width: 100
 			height: parent.height
-			anchors.verticalCenter: parent.verticalCenter
 			text: "TagID:"
 		}
 		TextField {
@@ -72,14 +70,11 @@ Rectangle {
 			width: eventName.width - btnSearchTag.width
 			height: parent.height
 			verticalAlignment: TextEdit.AlignVCenter
-			anchors.verticalCenter: parent.verticalCenter
-			anchors.right: btnSearchTag.left
 		}
 		Button {
 			id: btnSearchTag
 			width: 50
 			height: parent.height
-			anchors.right: parent.right
 			text: "..."
 			onClicked: function() {
 				var tagId;
@@ -92,11 +87,10 @@ Rectangle {
 	Row {
 		anchors.topMargin: 10
 		anchors.top: tagEntry.bottom
-		anchors.horizontalCenter: parent.horizontalCenter
 		width: nameEntry.width
 		height: nameEntry.height
+		anchors.horizontalCenter: parent.horizontalCenter
 		Button {
-			anchors.right: parent.right
 			text: "add"
 			onClicked: function() {
 				mainForm.db.transaction(function(tx){

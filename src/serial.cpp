@@ -90,7 +90,6 @@ bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int pari
 	ts.c_cc[VMIN] = 1;
 	ts.c_cc[VTIME] = timeout * 10; // entity: 1/10 seconds
 
-	cerr << "timeout: 0x" << hex << setw(2) << setfill('0') << (int)ts.c_cc[VTIME] << endl;
 	if(tcsetattr(fd, TCSAFLUSH, &ts) == 0) {
 		tcgetattr(fd, &tmp);
 		return ts == tmp;

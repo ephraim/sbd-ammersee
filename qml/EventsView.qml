@@ -111,11 +111,11 @@ Rectangle {
 		}
 		highlight: Component {
 			Rectangle {
-				width: eventsList.currentItem.width;
-				height: eventsList.currentItem.height
+				width: eventsList.currentItem ? eventsList.currentItem.width : 0
+				height: eventsList.currentItem ? eventsList.currentItem.height : 0
 				color: "#2c5a85"
 				radius: 5
-				y: eventsList.currentItem.y
+				y: eventsList.currentItem ? eventsList.currentItem.y : 0
 				Behavior on y {
 					SmoothedAnimation {
 						duration: 1000
