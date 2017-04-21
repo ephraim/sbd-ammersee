@@ -5,6 +5,8 @@
 class QSimpleProtocolClient : public QObject, public SimpleProtocolClient
 {
 	Q_OBJECT
+public:
+	QSimpleProtocolClient(QString port = "/dev/ttyACM0") : SimpleProtocolClient(port.toStdString()) { };
 public slots:
 	void beep(uint8_t volume = 85, uint16_t frequence = 2000, uint16_t ontime = 0x80, uint16_t offtime = 0x80) {
 		SimpleProtocolClient::beep(volume, frequence, ontime, offtime);

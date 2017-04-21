@@ -16,6 +16,7 @@ public:
 	int write(const vector<uint8_t> &v);
 	vector<uint8_t> read();
 	uint16_t genCrc(vector<uint8_t> v);
+	bool isOpen() { return fd >= 0; }
 
 private:
 	int fd;

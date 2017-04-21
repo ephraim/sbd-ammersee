@@ -8,7 +8,8 @@
 SimpleProtocolClient::SimpleProtocolClient(string port/* = "/dev/ttyACM0"*/)
 : Serial(port, 115200, 1, 0, 10)
 {
-	GPIOConfigureOutputs(REDLED | GREENLED, GPIO_PUPD_NOPULL, GPIO_OTYPE_PUSHPULL); // Led Green => GPIO1 => 0x02, Led Red => GPIO0 => 0x01
+	if(isOpen())
+		GPIOConfigureOutputs(REDLED | GREENLED, GPIO_PUPD_NOPULL, GPIO_OTYPE_PUSHPULL); // Led Green => GPIO1 => 0x02, Led Red => GPIO0 => 0x01
 }
 
 SimpleProtocolClient::~SimpleProtocolClient()
