@@ -29,6 +29,7 @@ Item {
 			anchors.top: parent.top
 			anchors.topMargin: 50
 			anchors.bottom: parent.bottom
+			anchors.bottomMargin: 25
 			anchors.horizontalCenter: parent.horizontalCenter
 			radius: 5
 
