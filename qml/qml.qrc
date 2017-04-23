@@ -6,7 +6,9 @@
 		<file>TeilnehmerListView.qml</file>
 		<file>EventsView.qml</file>
 		<file>EventView.qml</file>
+		<file>FormEntry.qml</file>
 		<file>AddEventForm.qml</file>
+		<file>AddTeilnehmerForm.qml</file>
 		<file>images/headerbg.png</file>
 		<file>images/headeroverlay.png</file>
 		<file>images/logo.png</file>

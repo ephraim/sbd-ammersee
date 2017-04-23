@@ -6,7 +6,7 @@ Rectangle {
 	property var mainForm
 
 	Component.onCompleted: {
-		spc.onFoundTag.connect(function(result, tagID) {
+		/*spc.onFoundTag.connect(function(result, tagID) {
 			if(result) {
 				eventTag.text = tagID;
 				spc.beep();
@@ -19,7 +19,7 @@ Rectangle {
 				spc.switchLED(0x01, false);
 			}
 			spc.switchLED(0x02, false);
-		});
+		});*/
 	}
 	Text {
 		id: heading

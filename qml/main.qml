@@ -14,7 +14,7 @@ ApplicationWindow {
 	Component.onCompleted: {
 		db.transaction(function(tx) {
 			tx.executeSql("CREATE TABLE IF NOT EXISTS 'Teilnehmer' ('ID' INTEGER PRIMARY KEY AUTOINCREMENT, 'Vorname' TEXT, 'Nachname' TEXT, 'Gebtag' TEXT, 'Startnr' TEXT, 'Gender' TEXT, 'Visitor' BOOLEAN, 'IDTAG' INTEGER, 'Event_ID' INTEGER, 'Endzeit' INTEGER DEFAULT 0);");
-			tx.executeSql("CREATE TABLE IF NOT EXISTS 'Event' ('ID' INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 'EventName' TEXT, 'Startzeit' INTEGER DEFAULT 0, 'done' BOOLEAN DEFAULT 0);");
+			tx.executeSql("CREATE TABLE IF NOT EXISTS 'Event' ('ID' INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 'EventName' TEXT, 'Startzeit' INTEGER DEFAULT 0, 'Endzeit' INTEGER DEFAULT 0);");
 			// tx.executeSql("INSERT INTO 'Event' ('EventName') VALUES ('2017'), ('2016')");
 			// tx.executeSql("insert into Teilnehmer ('Vorname', 'Nachname', 'GebTag', 'Startnr', 'Gender', 'Visitor', 'IDTAG', 'Event_ID') VALUES ('Flavia', 'Cestonaro', 'gebtag', '10', 'w', 0, 12435365, 2);");
 		});
