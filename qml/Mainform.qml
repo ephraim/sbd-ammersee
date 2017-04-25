@@ -18,6 +18,10 @@ Item {
 		content.state = "addEvent";
 	}
 
+	function hideAddEvent() {
+		content.state = "";
+	}
+
 	Rectangle {
 		anchors.fill: parent
 		color: "#2c5a85"
@@ -35,7 +39,6 @@ Item {
 
 			EventsView {
 				id: eventsView
-				mainForm: root
 				anchors.top: parent.top
 				anchors.left: parent.left
 				anchors.bottom: parent.bottom
@@ -64,7 +67,6 @@ Item {
 
 			AddEventForm {
 				id: addEventForm
-				mainForm: root
 				anchors.top: parent.top
 				anchors.leftMargin: 5
 				anchors.left: eventsView.right

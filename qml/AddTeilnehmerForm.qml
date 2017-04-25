@@ -6,6 +6,22 @@ Rectangle {
 	property var formwidth: 400
 	property var rowheight: 24
 
+	function clear() {
+		db.transaction(function(tx) {
+			var rs = tx.executeSql("select Startnr from Teilnehmer Order By Startnr Desc Limit 1")
+			if(rs.rows.length == 1) {
+				startnummer.entry = rs.rows.item(0).Startnr + 1;
+			}
+		});
+		vorname.entry = "";
+		nachname.entry = "";
+		geburtstag.entry = "";
+		rbGenderMale.checked = true;
+		rbGenderFemale.checked = false;
+		cbVisitor.checked = false;
+		tagId.text = "";
+	}
+
 	function onFoundTeilnehmerTag(result, tagID) {
 		if(result) {
 			tagId.text = tagID;
@@ -24,7 +40,7 @@ Rectangle {
 
 	Text {
 		id: heading
-		anchors.topMargin: 50
+		anchors.topMargin: 30
 		anchors.top: parent.top
 		anchors.horizontalCenter: parent.horizontalCenter
 		text: "Teilnehmer hinzufügen"
@@ -40,6 +56,7 @@ Rectangle {
 		height: root.rowheight
 		width: root.formwidth
 		label: "Vorname:"
+		entry: "Thilo"
 	}
 
 	FormEntry {
@@ -50,6 +67,7 @@ Rectangle {
 		height: root.rowheight
 		width: root.formwidth
 		label: "Nachname:"
+		entry: "Cestonaro"
 	}
 	FormEntry {
 		id: geburtstag
@@ -59,6 +77,7 @@ Rectangle {
 		height: root.rowheight
 		width: root.formwidth
 		label: "Geburtstag:"
+		entry: "28.04.1977"
 	}
 	FormEntry {
 		id: startnummer
@@ -68,6 +87,7 @@ Rectangle {
 		height: root.rowheight
 		width: root.formwidth
 		label: "Startnummer:"
+		entry: "42"
 	}
 	Row {
 		id: gender
@@ -85,12 +105,14 @@ Rectangle {
 		}
 		ExclusiveGroup { id: grpGender }
 		RadioButton {
+			id: rbGenderMale
 			width: ((parent.width / 4) * 3) / 2
 			text: "Männlich"
 			checked: true
 			exclusiveGroup: grpGender
 		}
 		RadioButton {
+			id: rbGenderFemale
 			width: ((parent.width / 4) * 3) / 2
 			text: "Weiblich"
 			exclusiveGroup: grpGender
@@ -155,11 +177,21 @@ Rectangle {
 		anchors.horizontalCenter: parent.horizontalCenter
 		Button {
 			text: "add"
-			onClicked: function() {
-				mainForm.db.transaction(function(tx){
-					tx.executeSql("INSERT INTO 'Event' ('EventName') VALUES ('" + eventName.text + "')");
+			onClicked: {
+				db.transaction(function(tx) {
+					var query = "INSERT INTO Teilnehmer ('Vorname', 'Nachname', 'Gebtag', 'Startnr', 'Gender', 'Visitor', 'IDTAG', 'Event_ID') VALUES (";
+					query += "'" + vorname.entry + "',";
+					query += "'" + nachname.entry + "',";
+					query += "'" + geburtstag.entry + "',";
+					query += "'" + startnummer.entry + "',";
+					query += "'" + (rbGenderMale.checked ? "m" : "f") + "',";
+					query += "'" + (cbVisitor.checked ? 1 : 0) + "',";
+					query += "'" + tagId.text + "',";
+					query += "'" + eventId + "');";
+					var rs = tx.executeSql(query);
 				});
-				mainForm.eventsView.reloadEventsFromDb();
+				openEvent(eventId);
+				addTeilnehmerDone();
 			}
 		}
 	}

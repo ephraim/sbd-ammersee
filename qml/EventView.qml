@@ -27,6 +27,8 @@ Rectangle {
 				}
 			}
 		});
+		addForm.visible = false;
+		teilnehmerView.visible = true;
 	}
 
 	function onfoundTag(result, tagID) {
@@ -34,8 +36,12 @@ Rectangle {
 			spc.switchLED(0x01, true);
 			spc.beep();
 			spc.switchLED(0x01, false);
+
 			db.transaction(function(tx) {
-				tx.executeSql("update Teilnehmer set Endzeit=\"" + Date.now() + "\" WHERE IDTAG = \"" + tagID + "\"");
+				var rs = tx.executeSql("Select * from Teilnehmer Where IDTAG == '" + tagID + "'");
+				if (rs.rows.length == 1) {
+					tx.executeSql("update Teilnehmer set Endzeit=\"" + Date.now() + "\" WHERE IDTAG = \"" + tagID + "\"");
+				}
 			});
 		}
 		spc.searchTag();
@@ -82,6 +88,11 @@ Rectangle {
 		anchors.horizontalCenter: parent.horizontalCenter
 		width: (parent.width / 3) * 2
 		visible: false
+
+		function addTeilnehmerDone() {
+			teilnehmerView.visible = true;
+			addForm.visible = false;
+		}
 	}
 
 	Timer {
@@ -115,6 +126,7 @@ Rectangle {
 			anchors.fill: parent
 			onClicked: {
 				teilnehmerView.visible = false;
+				addForm.clear();
 				addForm.visible = true;
 			}
 			onEntered: parent.color = "#5c8ab5"

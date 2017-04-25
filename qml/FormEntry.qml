@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import QtQuick.Controls 1.5
+
 Row {
 	id: root
 	property alias label: lbl.text

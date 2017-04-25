@@ -2,17 +2,20 @@ import QtQuick 2.6
 import QtQuick.Controls 1.5
 
 Rectangle {
-	property var mainForm
-
 	function reloadEventsFromDb() {
-		mainForm.db.transaction(function(tx) {
+		db.transaction(function(tx) {
 			events.clear();
 			var rs = tx.executeSql("SELECT * FROM Event ORDER BY EventName");
 			for(var i = 0; i < rs.rows.length; i++)
 				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName });
 		});
-		eventsList.currentIndex = 0;
-		openEvent(events.get(eventsList.currentIndex).eventid);
+		if(events.count > 0) {
+			eventsList.currentIndex = 0;
+			openEvent(events.get(eventsList.currentIndex).eventid);
+		}
+		else {
+			showAddEvent();
+		}
 	}
 
 	ListModel {
@@ -134,37 +137,36 @@ Rectangle {
 				font.weight: Font.Bold
 			}
 		}
-		footerPositioning: ListView.OverlayFooter
-		footer: Component {
-			Rectangle {
-				height: 50
-				anchors.left: parent.left
-				anchors.right: parent.right
-				Rectangle {
-					anchors.right: parent.right
-					anchors.bottom: parent.bottom
-					color: "#2c5a85"
-					height: 30
-					radius: 5
-					width: 50
-					Text {
-						anchors.centerIn: parent
-						text: "+"
-						font.pixelSize: 20
-						color: "white"
+	}
+	Rectangle {
+		height: 50
+		anchors.bottom: eventsList.bottom
+		anchors.right: eventsList.right
+		Rectangle {
+			anchors.right: parent.right
+			anchors.bottom: parent.bottom
+			color: "#2c5a85"
+			height: 30
+			radius: 5
+			width: 50
+			Text {
+				anchors.centerIn: parent
+				text: "+"
+				font.pixelSize: 20
+				color: "white"
+			}
+			MouseArea {
+				hoverEnabled: true
+				anchors.fill: parent
+				onClicked: {
+					if(eventsList.currentItem) {
+						eventsList.currentItem.children[1].color = ""
+						eventsList.currentIndex = -1;
 					}
-					MouseArea {
-						hoverEnabled: true
-						anchors.fill: parent
-						onClicked: {
-							eventsList.currentItem.children[1].color = ""
-							eventsList.currentIndex = -1;
-							showAddEvent();
-						}
-						onEntered: parent.color = "#5c8ab5"
-						onExited: parent.color = "#2c5a85"
-					}
+					showAddEvent();
 				}
+				onEntered: parent.color = "#5c8ab5"
+				onExited: parent.color = "#2c5a85"
 			}
 		}
 	}
