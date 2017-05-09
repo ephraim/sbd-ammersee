@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.3
 
 Flickable {
 	property alias teilnehmer: teilnehmer
+	property var eventStartzeit: 0
 
 	ListModel {
 		id: teilnehmer
@@ -27,31 +28,51 @@ Flickable {
 				anchors.rightMargin: 5
 				width: parent.width
 				color: Visitor ? "lightgrey" : "#5c8ab5"
-				Row {
-					id: mainInfo
-					spacing: 5
-					Text {
-						text: Startnr
-						font.pixelSize: 24
+				Column {
+					id: leftColumn
+					anchors.top: parent.top
+					anchors.left: parent.left
+					anchors.topMargin: 5
+					anchors.leftMargin: 5
+					width: parent.width / 3 - 10
+					Row {
+						spacing: 5
+						Text {
+							text: Startnr
+							font.pixelSize: 24
+						}
+						Text {
+							text: Nachname + " " + Vorname
+							font.pixelSize: 24
+						}
 					}
-					Text {
-						text: Nachname + " " + Vorname
-						font.pixelSize: 24
+					Row {
+						spacing: 5
+						Text {
+							text: Gender == "m" ? "männlich" : "weiblich"
+							font.pixelSize: 12
+						}
+						Text {
+							text: Gebtag
+							font.pixelSize: 12
+						}
 					}
 				}
-				Row {
-					anchors.top: mainInfo.bottom
+				Column {
+					anchors.top: parent.top
+					anchors.bottom: parent.bottom
+					anchors.left: leftColumn.right
 					anchors.topMargin: 5
-					anchors.left: parent.left
-					anchors.leftMargin: 35
-					spacing: 5
-					Text {
-						text: Gender == "m" ? "männlich" : "weiblich"
-						font.pixelSize: 12
-					}
-					Text {
-						text: Gebtag
-						font.pixelSize: 12
+					anchors.bottomMargin: 5
+					anchors.leftMargin: 5
+					width: parent.width / 3 * 2 - 10
+					Row {
+						spacing: 5
+						Text {
+							id: neededTime
+							text: Endzeit != 0 ? getNeededTime(startZeit, Endzeit) : ""
+							font.pixelSize: 32
+						}
 					}
 				}
 				Item {

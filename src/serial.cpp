@@ -9,6 +9,7 @@
 
 using namespace std;
 
+#ifndef _WIN32
 bool operator ==(const struct termios &a, const struct termios &b)
 {
 	if(a.c_iflag != b.c_iflag)
@@ -29,6 +30,7 @@ bool operator ==(const struct termios &a, const struct termios &b)
 
 	return true;
 }
+#endif
 
 Serial::Serial(string port/* = "/dev/ttyACM0"*/, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
 : fd(-1)
@@ -40,6 +42,7 @@ Serial::Serial(string port/* = "/dev/ttyACM0"*/, int baudrate/* = 115200*/, int 
 	}
 
 	setParameters(baudrate, stop, parity, timeout);
+	write_read_mutex.unlock();
 }
 
 Serial::~Serial()
@@ -50,6 +53,9 @@ Serial::~Serial()
 
 bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
 {
+#ifdef _WIN32
+	_setmode(fd, _O_BINARY);
+#else
 	struct termios ts;
 	struct termios tmp;
 	speed_t speed;
@@ -94,17 +100,22 @@ bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int pari
 		tcgetattr(fd, &tmp);
 		return ts == tmp;
 	}
+#endif
 	return false;
 }
 
 vector<uint8_t> Serial::write_read(vector<uint8_t> v)
 {
 	unsigned int i;
+	vector<uint8_t> ret;
+
+	write_read_mutex.lock();
 	i = write(v);
 	if(i != v.size())
 		return vector<uint8_t>();
-
-	return read();
+	ret = read();
+	write_read_mutex.unlock();
+	return ret;
 }
 
 int Serial::write(const vector<uint8_t> &v)
@@ -141,8 +152,11 @@ vector<uint8_t> Serial::read()
 	vector<uint8_t> tmp;
 
 	tmp.resize(2);
-	::read(fd, tmp.data(), (size_t)tmp.size());
+	size = ::read(fd, tmp.data(), (size_t)tmp.size());
+	if(size != 2)
+		return v;
 	size = tmp[0] | tmp[1]<<8;
+	//cout << "READ(" << dec << size << "): ";
 
 	tmp.clear();
 	tmp.resize(size);
@@ -150,7 +164,7 @@ vector<uint8_t> Serial::read()
 		count = ::read(fd, tmp.data(), (size_t)tmp.size());
 		v.insert(v.end(), tmp.begin(), tmp.begin() + count);
 	}
-	// cout << "READ(" << dec << v.size() << "): " << b2h(v) << endl;
+	// cout << b2h(v) << endl;
 	crc = v[v.size() - 2] | v[v.size() - 1]<<8;
 	v.erase(v.end() - 2, v.end());
 

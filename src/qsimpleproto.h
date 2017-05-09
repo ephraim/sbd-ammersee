@@ -1,6 +1,7 @@
 #include "simpleproto.h"
 #include "misc.h"
 #include <QObject>
+#include <QtConcurrent>
 
 class QSimpleProtocolClient : public QObject, public SimpleProtocolClient
 {
@@ -24,6 +25,10 @@ public slots:
 		SimpleProtocolClient::setTagTypes(lfTagTypes, hiTagTypes);
 	}
 	void searchTag() {
+		QtConcurrent::run(this, &QSimpleProtocolClient::_searchTag);
+	}
+protected:
+	void _searchTag() {
 		std::vector<uint8_t> v;
 		if(SimpleProtocolClient::searchTag(v)) {
 			emit foundTag(true, QString().fromStdString(b2h(v)));

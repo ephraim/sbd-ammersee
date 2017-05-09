@@ -7,8 +7,24 @@ Rectangle {
 	property var startZeit: 0;
 	property var endZeit: 0;
 
-	onEventIdChanged: {
+	function updateTeilnehmerlist() {
+		var rs;
 		teilnehmerView.teilnehmer.clear();
+		db.transaction(function(tx) {
+			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit != 0 ORDER BY Endzeit");
+			if (rs.rows.length > 0) {
+				for(var i = 0; i < rs.rows.length; i++)
+					teilnehmerView.teilnehmer.append(rs.rows.item(i));
+			}
+			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit == 0 ORDER BY Nachname,Vorname");
+			if (rs.rows.length > 0) {
+				for(var i = 0; i < rs.rows.length; i++)
+					teilnehmerView.teilnehmer.append(rs.rows.item(i));
+			}
+		});
+	}
+
+	onEventIdChanged: {
 		state = "";
 		db.transaction(function(tx) {
 			var rs = tx.executeSql("Select * from Event Where ID == '" + eventId + "' LIMIT 1");
@@ -17,30 +33,51 @@ Rectangle {
 				startZeit = rs.rows.item(0).Startzeit;
 				endZeit = rs.rows.item(0).Endzeit;
 
-				if(startZeit != 0)
-					state = endZeit == 0 ? "running" : "done";
-
-				rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "'");
-				if (rs.rows.length > 0) {
-					for(var i = 0; i < rs.rows.length; i++)
-						teilnehmerView.teilnehmer.append(rs.rows.item(i));
+				if(startZeit != 0) {
+					if(endZeit == 0) {
+						spc.switchLED(2, true);
+						spc.beep();
+						spc.onFoundTag.connect(onfoundTag);
+						spc.searchTag();
+						state = "running";
+					}
+					else {
+						timeView.text = "Beendet nach " + getNeededTime(startZeit, endZeit);
+						state = "done";
+					}
 				}
 			}
 		});
+		updateTeilnehmerlist();
 		addForm.visible = false;
 		teilnehmerView.visible = true;
 	}
 
+	function pad(s, size) {
+		s = String(s);
+		while (s.length < (size || 2)) {s = "0" + s;}
+		return s;
+	}
+
+	function getNeededTime(start, ende)
+	{
+		var date = new Date(ende - start);
+		return pad(date.getUTCHours(), 2) + ":" + pad(date.getUTCMinutes(), 2) + ":" + pad(date.getUTCSeconds(), 2)
+	}
+
 	function onfoundTag(result, tagID) {
 		if(result) {
-			spc.switchLED(0x01, true);
+			spc.switchLED(1, true);
 			spc.beep();
-			spc.switchLED(0x01, false);
+			spc.switchLED(1, false);
 
 			db.transaction(function(tx) {
 				var rs = tx.executeSql("Select * from Teilnehmer Where IDTAG == '" + tagID + "'");
 				if (rs.rows.length == 1) {
-					tx.executeSql("update Teilnehmer set Endzeit=\"" + Date.now() + "\" WHERE IDTAG = \"" + tagID + "\"");
+					var endzeit = Date.now();
+					console.log("Teilnehmer " + rs.rows.item(0).Nachname + " " + rs.rows.item(0).Vorname + " was done after: " + getNeededTime(root.startZeit, endzeit));
+					tx.executeSql("update Teilnehmer set Endzeit=\"" + endzeit + "\" WHERE IDTAG = \"" + tagID + "\"");
+					updateTeilnehmerlist();
 				}
 			});
 		}
@@ -100,10 +137,7 @@ Rectangle {
 		interval: 500;
 		running: false;
 		repeat: true
-		onTriggered: {
-			var tmp = new Date(Date.now() - root.startZeit);
-			timeView.text = "%02d:%02d:%02d".format(tmp.getHours(), tmp.getMinutes(), tmp.getSeconds());
-		}
+		onTriggered: timeView.text = getNeededTime(root.startZeit, Date.now());
 	}
 
 	Rectangle {
@@ -156,7 +190,7 @@ Rectangle {
 			anchors.fill: parent
 			onClicked: {
 				if(root.state == "") {
-					spc.switchLED(0x02, true);
+					spc.switchLED(2, true);
 					spc.beep();
 					spc.onFoundTag.connect(onfoundTag);
 					spc.searchTag();
@@ -167,11 +201,19 @@ Rectangle {
 					});
 				}
 				else if(root.state == "running") {
-					root.state = "done";
 					spc.onFoundTag.disconnect(onfoundTag);
+					spc.switchLED(2, false);
+					spc.switchLED(1, true);
+					spc.beep();
+					spc.beep();
+					spc.beep();
+					spc.switchLED(1, false);
+					root.endZeit = Date.now();
+					root.state = "done";
 					db.transaction(function(tx) {
 						tx.executeSql("update Event set Endzeit=\"" + Date.now() + "\" WHERE ID = \"" + eventId + "\"");
 					});
+					timeView.text = "Beendet nach " + getNeededTime(root.startZeit, root.endZeit);
 				}
 			}
 			onEntered: parent.color = "#5c8ab5"
@@ -182,15 +224,17 @@ Rectangle {
 	states: [
 		State {
 			name: "running"
-			PropertyChanges { target: btnLabel;	text: "Stop"	 }
-			PropertyChanges { target: timeView;	visible: true	 }
-			PropertyChanges { target: timer;	running: true	 }
+			PropertyChanges { target: btnLabel;			text: "Stop" }
+			PropertyChanges { target: timeView;			visible: true }
+			PropertyChanges { target: timer;			running: true }
+			PropertyChanges { target: addTeilnehmer;	visible: false }
 		},
 		State {
 			name: "done"
-			PropertyChanges { target: button;	visible: false }
-			PropertyChanges { target: timeView;	text: "Beendet"; visible: true }
-			PropertyChanges { target: timer;	running: false }
+			PropertyChanges { target: button;			visible: false }
+			PropertyChanges { target: timeView;			visible: true }
+			PropertyChanges { target: timer;			running: false }
+			PropertyChanges { target: addTeilnehmer;	visible: false }
 		}
 	]
 }
