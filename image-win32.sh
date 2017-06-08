@@ -34,16 +34,12 @@ install ${MXE_HOME}/bin/libbz2.dll			${DEST_DIR}/
 install ${MXE_HOME}/bin/libintl-8.dll		${DEST_DIR}/
 install ${MXE_HOME}/bin/libpcre-1.dll		${DEST_DIR}/
 install ${MXE_HOME}/bin/libiconv-2.dll		${DEST_DIR}/
-
-exit
-
-${MXE_HOME}/bin/libwebp-5.dll
-${MXE_HOME}/bin/libsqlite3-0.dll
-${MXE_HOME}/bin/libjasper-1.dll
-${MXE_HOME}/bin/libjpeg-9.dll
-${MXE_HOME}/bin/liblcms2-2.dll
-${MXE_HOME}/bin/libwebpdemux-1.dll
-${MXE_HOME}/bin/libtiff-5.dll
-${MXE_HOME}/bin/liblzma-5.dll
-${MXE_HOME}/bin/libiconv-2.dll
-${MXE_HOME}/bin/libmng-2.dll
+install ${MXE_HOME}/bin/libsqlite3-0.dll	${DEST_DIR}/
+install ${MXE_HOME}/bin/libjasper-1.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/libjpeg-9.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/libmng-2.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/libtiff-5.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/libwebp-5.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/libwebpdemux-1.dll	${DEST_DIR}/
+install ${MXE_HOME}/bin/liblcms2-2.dll		${DEST_DIR}/
+install ${MXE_HOME}/bin/liblzma-5.dll		${DEST_DIR}/
