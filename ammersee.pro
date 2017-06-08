@@ -3,6 +3,7 @@ TEMPLATE = app
 QT += qml quick widgets concurrent
 
 CONFIG += c++11
+CONFIG -= debug
 
 SOURCES += src/main.cpp src/serial.cpp src/simpleproto.cpp src/misc.cpp
 HEADERS += src/serial.h src/simpleproto.h src/qsimpleproto.h src/misc.h src/twn4.sys.h
