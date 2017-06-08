@@ -17,7 +17,7 @@ enum SPC_LED {
 class SimpleProtocolClient : public Serial
 {
 public:
-	SimpleProtocolClient(string port = "/dev/ttyACM0");
+	SimpleProtocolClient(string port);
 	virtual ~SimpleProtocolClient();
 
 	virtual void beep(uint8_t volume = 85, uint16_t frequence = 2000, uint16_t ontime = 0x80, uint16_t offtime = 0x80);

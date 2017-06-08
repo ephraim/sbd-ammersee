@@ -14,9 +14,9 @@ using namespace std;
 class Serial {
 public:
 #ifndef _WIN32
-	Serial(string port = "/dev/ttyACM0", int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 10);
+	Serial(string port, int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 10);
 #else
-	Serial(string port = "/dev/ttyACM0");
+	Serial(string port);
 #endif
 	virtual ~Serial();
 

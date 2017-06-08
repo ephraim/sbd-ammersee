@@ -5,7 +5,7 @@
 
 #include "twn4.sys.h"
 
-SimpleProtocolClient::SimpleProtocolClient(string port/* = "/dev/ttyACM0"*/)
+SimpleProtocolClient::SimpleProtocolClient(string port)
 #ifndef _WIN32
 : Serial(port, 115200, 1, 0, 10)
 #else

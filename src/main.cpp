@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 	QCoreApplication::setApplicationName("ammersee");
     QCoreApplication::setApplicationVersion("1.0");
 
-	QString port("/dev/ttyACM0");
+	QString port;
 	QCommandLineParser parser;
 	QCommandLineOption portOption(QStringList() << "p" << "port", "RFID-Reader serial port", "port");
 

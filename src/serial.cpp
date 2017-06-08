@@ -33,13 +33,17 @@ bool operator ==(const struct termios &a, const struct termios &b)
 #endif
 
 #ifndef _WIN32
-Serial::Serial(string port/* = "/dev/ttyACM0"*/, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
+Serial::Serial(string port, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
 #else
-Serial::Serial(string port/* = "/dev/ttyACM0"*/)
+Serial::Serial(string port)
 #endif
 : fd(-1)
 {
+	if(port.empty())
+		return;
+
 	fd = open(port.c_str(), O_RDWR);
+
 	if(fd < 0) {
 		cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
 		return;
