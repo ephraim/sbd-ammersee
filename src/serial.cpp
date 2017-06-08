@@ -32,7 +32,11 @@ bool operator ==(const struct termios &a, const struct termios &b)
 }
 #endif
 
+#ifndef _WIN32
 Serial::Serial(string port/* = "/dev/ttyACM0"*/, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
+#else
+Serial::Serial(string port/* = "/dev/ttyACM0"*/)
+#endif
 : fd(-1)
 {
 	fd = open(port.c_str(), O_RDWR);
@@ -41,8 +45,12 @@ Serial::Serial(string port/* = "/dev/ttyACM0"*/, int baudrate/* = 115200*/, int 
 		return;
 	}
 
+#ifndef _WIN32
 	setParameters(baudrate, stop, parity, timeout);
 	write_read_mutex.unlock();
+#else
+	setParameters();
+#endif
 }
 
 Serial::~Serial()
@@ -51,7 +59,11 @@ Serial::~Serial()
 		close(fd);
 }
 
+#ifndef _WIN32
 bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
+#else
+bool Serial::setParameters()
+#endif
 {
 #ifdef _WIN32
 	_setmode(fd, _O_BINARY);
@@ -109,12 +121,16 @@ vector<uint8_t> Serial::write_read(vector<uint8_t> v)
 	unsigned int i;
 	vector<uint8_t> ret;
 
+#ifndef _WIN32
 	write_read_mutex.lock();
+#endif
 	i = write(v);
 	if(i != v.size())
 		return vector<uint8_t>();
 	ret = read();
+#ifndef _WIN32
 	write_read_mutex.unlock();
+#endif
 	return ret;
 }
 
