@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import QtQuick.Controls 1.5
+import MyCustomClasses 1.0
 
 Rectangle {
 	id: root
@@ -168,6 +169,10 @@ Rectangle {
 		}
 	}
 
+	FileIOQML {
+		id: fileIO
+	}
+
 	Rectangle {
 		id: button
 		anchors.right: teilnehmerView.right
@@ -215,8 +220,14 @@ Rectangle {
 					});
 					timeView.text = "Beendet nach " + getNeededTime(root.startZeit, root.endZeit);
 				}
+				else if(root.state == "done") {
+
+				}
 			}
-			onEntered: parent.color = "#5c8ab5"
+			onEntered: {
+				parent.color = "#5c8ab5";
+				fileIO.openFileDlg();
+			}
 			onExited:  parent.color = "#2c5a85"
 		}
 	}
@@ -231,7 +242,7 @@ Rectangle {
 		},
 		State {
 			name: "done"
-			PropertyChanges { target: button;			visible: false }
+			PropertyChanges { target: btnLabel;			text: "Export" }
 			PropertyChanges { target: timeView;			visible: true }
 			PropertyChanges { target: timer;			running: false }
 			PropertyChanges { target: addTeilnehmer;	visible: false }

@@ -5,12 +5,15 @@
 #include <QtQml>
 #include "twn4.sys.h"
 #include "qsimpleproto.h"
+#include "fileio.h"
 
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 	QCoreApplication::setApplicationName("ammersee");
     QCoreApplication::setApplicationVersion("1.0");
+
+	qmlRegisterType<FileIO>("MyCustomClasses", 1, 0, "FileIOQML");
 
 	QString port;
 	QCommandLineParser parser;
@@ -28,6 +31,7 @@ int main(int argc, char *argv[])
 	QSimpleProtocolClient spc(port);
 	QQmlApplicationEngine engine;
 	QQmlContext *cntxt = engine.rootContext();
+	app.setProperty("engine", QVariant::fromValue(&engine));
 
 	spc.setTagTypes(TAGMASK(LFTAG_EM4102), TAGMASK(HFTAG_MIFARE));
 	cntxt->setContextProperty("spc", &spc);
