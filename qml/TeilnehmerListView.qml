@@ -53,7 +53,7 @@ Flickable {
 							font.pixelSize: 12
 						}
 						Text {
-							text: Gebtag
+							text: formatGebtag(Gebtag)
 							font.pixelSize: 12
 						}
 					}

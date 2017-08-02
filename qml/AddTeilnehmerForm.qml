@@ -6,6 +6,18 @@ Rectangle {
 	property var formwidth: 400
 	property var rowheight: 24
 
+	function pad(s, size) {
+		s = String(s);
+		while (s.length < (size || 2)) {s = "0" + s;}
+		return s;
+	}
+
+	function formatGebtag(gebtag)
+	{
+		var date = Date.fromLocaleDateString(Qt.locale("de_DE"), gebtag, "dd.MM.yyyy");
+		return date.getFullYear() + "-" + pad(date.getMonth()+1, 2) + "-" + pad(date.getDate(), 2);
+	}
+
 	function clear() {
 		db.transaction(function(tx) {
 			var rs = tx.executeSql("select Startnr from Teilnehmer Order By Startnr Desc Limit 1")
@@ -178,11 +190,12 @@ Rectangle {
 		Button {
 			text: "add"
 			onClicked: {
+				var gebtag = formatGebtag(geburtstag.entry);
 				db.transaction(function(tx) {
 					var query = "INSERT INTO Teilnehmer ('Vorname', 'Nachname', 'Gebtag', 'Startnr', 'Gender', 'Visitor', 'IDTAG', 'Event_ID') VALUES (";
 					query += "'" + vorname.entry + "',";
 					query += "'" + nachname.entry + "',";
-					query += "'" + geburtstag.entry + "',";
+					query += "'" + gebtag + "',";
 					query += "'" + startnummer.entry + "',";
 					query += "'" + (rbGenderMale.checked ? "m" : "f") + "',";
 					query += "'" + (cbVisitor.checked ? 1 : 0) + "',";

@@ -11,5 +11,10 @@ public:
     ~FileIO() {};
 
 public slots:
-    void openFileDlg();    
+    void openFileDlg();
+    void writeLine(QString line);
+    void openFile(QString fileName);
+    void closeFile();
+private:
+    QFile f;
 };

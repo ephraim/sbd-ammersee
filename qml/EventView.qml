@@ -66,6 +66,11 @@ Rectangle {
 		return pad(date.getUTCHours(), 2) + ":" + pad(date.getUTCMinutes(), 2) + ":" + pad(date.getUTCSeconds(), 2)
 	}
 
+	function formatGebtag(gebtag)
+	{
+		return Date.fromLocaleDateString(Qt.locale("de_DE"), gebtag, "yyyy-MM-dd").toLocaleDateString(Qt.locale("de_DE"), "dd.MM.yyyy");
+	}
+
 	function onfoundTag(result, tagID) {
 		if(result) {
 			spc.switchLED(1, true);
@@ -171,6 +176,7 @@ Rectangle {
 
 	FileIOQML {
 		id: fileIO
+		property var fileName: ""
 	}
 
 	Rectangle {
@@ -221,12 +227,98 @@ Rectangle {
 					timeView.text = "Beendet nach " + getNeededTime(root.startZeit, root.endZeit);
 				}
 				else if(root.state == "done") {
+					fileIO.openFileDlg();
+					if(fileIO.fileName) {
+						fileIO.openFile(fileIO.fileName);
+						fileIO.writeLine(heading.text);
+						fileIO.writeLine("");
+						var line;
+						fileIO.writeLine("Alle");
+						db.transaction(function(tx) {
+							var rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' ORDER BY Endzeit;");
+							console.log("exporting rows: " + rs.rows.length);
+							for(var i = 0; i < rs.rows.length; i++) {
+								line = "";
+								line += rs.rows.item(i).Vorname + ", ";
+								line += rs.rows.item(i).Nachname + ", ";
+								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								fileIO.writeLine(line);
+							}
+							fileIO.writeLine("");
 
+							fileIO.writeLine("Männer");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Endzeit;");
+							console.log("exporting rows: " + rs.rows.length);
+							for(var i = 0; i < rs.rows.length; i++) {
+								line = "";
+								line += rs.rows.item(i).Vorname + ", ";
+								line += rs.rows.item(i).Nachname + ", ";
+								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								fileIO.writeLine(line);
+							}
+							fileIO.writeLine("");
+
+							fileIO.writeLine("Frauen");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Endzeit;");
+							console.log("exporting rows: " + rs.rows.length);
+							for(var i = 0; i < rs.rows.length; i++) {
+								line = "";
+								line += rs.rows.item(i).Vorname + ", ";
+								line += rs.rows.item(i).Nachname + ", ";
+								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								fileIO.writeLine(line);
+							}
+							fileIO.writeLine("");
+
+							fileIO.writeLine("Männer");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag ASC LIMIT 1;");
+							console.log("exporting rows: " + rs.rows.length);
+							line = "";
+							line += rs.rows.item(0).Vorname + ", ";
+							line += rs.rows.item(0).Nachname + ", ";
+							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							fileIO.writeLine(line);
+
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag DESC LIMIT 1;");
+							console.log("exporting rows: " + rs.rows.length);
+							line = "";
+							line += rs.rows.item(0).Vorname + ", ";
+							line += rs.rows.item(0).Nachname + ", ";
+							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							fileIO.writeLine(line);
+							fileIO.writeLine("");
+
+							fileIO.writeLine("Frauen");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag ASC LIMIT 1;");
+							console.log("exporting rows: " + rs.rows.length);
+							line = "";
+							line += rs.rows.item(0).Vorname + ", ";
+							line += rs.rows.item(0).Nachname + ", ";
+							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							fileIO.writeLine(line);
+
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag DESC LIMIT 1;");
+							console.log("exporting rows: " + rs.rows.length);
+							line = "";
+							line += rs.rows.item(0).Vorname + ", ";
+							line += rs.rows.item(0).Nachname + ", ";
+							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							fileIO.writeLine(line);
+							fileIO.writeLine("");
+						});
+						fileIO.closeFile();
+					}
 				}
 			}
 			onEntered: {
 				parent.color = "#5c8ab5";
-				fileIO.openFileDlg();
 			}
 			onExited:  parent.color = "#2c5a85"
 		}
