@@ -21,7 +21,7 @@ Flickable {
 			id: delegateTeilnehmer
 			Rectangle {
 				radius: 5
-				height: 50
+				height: 60
 				anchors.left: parent.left
 				anchors.right: parent.right
 				anchors.leftMargin: 5
@@ -54,6 +54,10 @@ Flickable {
 						}
 						Text {
 							text: formatGebtag(Gebtag)
+							font.pixelSize: 12
+						}
+						Text {
+							text: Visitor == 0 ? "Mitglied" : "Gast"
 							font.pixelSize: 12
 						}
 					}
