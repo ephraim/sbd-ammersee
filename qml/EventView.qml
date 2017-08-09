@@ -11,20 +11,25 @@ Rectangle {
 
 	function updateTeilnehmerlist() {
 		var rs;
+		var teilnehmer = 0;
 		teilnehmerView.teilnehmer.clear();
 		db.transaction(function(tx) {
 			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit != 0 ORDER BY Endzeit");
+			teilnehmer += rs.rows.length;
 			if (rs.rows.length > 0) {
 				for(var i = 0; i < rs.rows.length; i++)
 					teilnehmerView.teilnehmer.append(rs.rows.item(i));
 			}
 			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit == 0 ORDER BY Nachname,Vorname");
+			teilnehmer += rs.rows.length;
 			if (rs.rows.length > 0) {
 				activeSwimmer = rs.rows.length;
 				for(var i = 0; i < rs.rows.length; i++)
 					teilnehmerView.teilnehmer.append(rs.rows.item(i));
 			}
 		});
+
+		return teilnehmer;
 	}
 
 	onEventIdChanged: {
@@ -51,9 +56,14 @@ Rectangle {
 				}
 			}
 		});
-		updateTeilnehmerlist();
-		addForm.visible = false;
-		teilnehmerView.visible = true;
+		;
+		if(updateTeilnehmerlist() == 0) {
+			showAddTeilnehmerForm();
+		}
+		else {
+			addForm.visible = false;
+			teilnehmerView.visible = true;
+		}
 	}
 
 	function pad(s, size) {
@@ -71,6 +81,12 @@ Rectangle {
 	function formatGebtag(gebtag)
 	{
 		return Date.fromLocaleDateString(Qt.locale("de_DE"), gebtag, "yyyy-MM-dd").toLocaleDateString(Qt.locale("de_DE"), "dd.MM.yyyy");
+	}
+	function showAddTeilnehmerForm()
+	{
+		teilnehmerView.visible = false;
+		addForm.clear();
+		addForm.visible = true;
 	}
 
 	function onfoundTag(result, tagID) {
@@ -169,11 +185,7 @@ Rectangle {
 		MouseArea {
 			hoverEnabled: true
 			anchors.fill: parent
-			onClicked: {
-				teilnehmerView.visible = false;
-				addForm.clear();
-				addForm.visible = true;
-			}
+			onClicked: showAddTeilnehmerForm()
 			onEntered: parent.color = "#5c8ab5"
 			onExited:  parent.color = "#2c5a85"
 		}

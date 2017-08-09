@@ -2,15 +2,19 @@ import QtQuick 2.6
 import QtQuick.Controls 1.5
 
 Rectangle {
-	function reloadEventsFromDb() {
+	function reloadEventsFromDb(eventname) {
+		var current = 0;
 		db.transaction(function(tx) {
 			events.clear();
 			var rs = tx.executeSql("SELECT * FROM Event ORDER BY EventName");
-			for(var i = 0; i < rs.rows.length; i++)
+			for(var i = 0; i < rs.rows.length; i++) {
+				if(eventname == rs.rows.item(i).EventName)
+					current = events.count;
 				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName, startZeit: rs.rows.item(i).Startzeit });
+			}
 		});
 		if(events.count > 0) {
-			eventsList.currentIndex = 0;
+			eventsList.currentIndex = current;
 			openEvent(events.get(eventsList.currentIndex).eventid);
 		}
 		else {

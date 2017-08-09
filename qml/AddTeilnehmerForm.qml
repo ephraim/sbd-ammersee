@@ -19,11 +19,11 @@ Rectangle {
 	}
 
 	function clear() {
+		startnummer.entry = 1;
 		db.transaction(function(tx) {
-			var rs = tx.executeSql("select Startnr from Teilnehmer Order By Startnr Desc Limit 1")
-			if(rs.rows.length == 1) {
+			var rs = tx.executeSql("select Startnr from Teilnehmer Where Event_ID == '" + eventId + "' Order By Startnr Desc Limit 1")
+			if(rs.rows.length == 1)
 				startnummer.entry = rs.rows.item(0).Startnr + 1;
-			}
 		});
 		vorname.entry = "";
 		nachname.entry = "";
@@ -188,7 +188,7 @@ Rectangle {
 		height: root.rowheight
 		anchors.horizontalCenter: parent.horizontalCenter
 		Button {
-			text: "add"
+			text: "Hinzufügen"
 			onClicked: {
 				var gebtag = formatGebtag(geburtstag.entry);
 				db.transaction(function(tx) {

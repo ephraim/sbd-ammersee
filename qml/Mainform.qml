@@ -15,6 +15,7 @@ Item {
 	}
 
 	function showAddEvent() {
+		addEventForm.eventname = "";
 		content.state = "addEvent";
 	}
 

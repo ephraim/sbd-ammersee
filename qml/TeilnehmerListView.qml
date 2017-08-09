@@ -98,7 +98,6 @@ Flickable {
 				MouseArea {
 					hoverEnabled: true
 					anchors.fill: parent
-					onClicked: { console.log("big mousearea clicked"); }
 					onEntered: { deleteTeilnehmer.visible = (startZeit == 0); }
 					onExited: { deleteTeilnehmer.visible = false; }
 				}
