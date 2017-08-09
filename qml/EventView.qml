@@ -7,6 +7,7 @@ Rectangle {
 	property var eventId: -1
 	property var startZeit: 0;
 	property var endZeit: 0;
+	property var activeSwimmer: 0;
 
 	function updateTeilnehmerlist() {
 		var rs;
@@ -19,6 +20,7 @@ Rectangle {
 			}
 			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit == 0 ORDER BY Nachname,Vorname");
 			if (rs.rows.length > 0) {
+				activeSwimmer = rs.rows.length;
 				for(var i = 0; i < rs.rows.length; i++)
 					teilnehmerView.teilnehmer.append(rs.rows.item(i));
 			}
@@ -43,7 +45,7 @@ Rectangle {
 						state = "running";
 					}
 					else {
-						timeView.text = "Beendet nach " + getNeededTime(startZeit, endZeit);
+						statusText.text = "Beendet nach " + getNeededTime(startZeit, endZeit);
 						state = "done";
 					}
 				}
@@ -78,11 +80,11 @@ Rectangle {
 			spc.switchLED(1, false);
 
 			db.transaction(function(tx) {
-				var rs = tx.executeSql("Select * from Teilnehmer Where IDTAG == '" + tagID + "'");
+				var rs = tx.executeSql("Select * from Teilnehmer Where IDTAG == '" + tagID + "' and Event_ID == '" + eventId + "'");
 				if (rs.rows.length == 1) {
 					var endzeit = Date.now();
 					console.log("Teilnehmer " + rs.rows.item(0).Nachname + " " + rs.rows.item(0).Vorname + " was done after: " + getNeededTime(root.startZeit, endzeit));
-					tx.executeSql("update Teilnehmer set Endzeit=\"" + endzeit + "\" WHERE IDTAG = \"" + tagID + "\"");
+					tx.executeSql("update Teilnehmer set Endzeit=\"" + endzeit + "\" WHERE IDTAG = \"" + tagID + "\" and Event_ID == '" + eventId + "'");
 					updateTeilnehmerlist();
 				}
 			});
@@ -101,11 +103,11 @@ Rectangle {
 	}
 
 	Text {
-		id: timeView
+		id: statusText
 		anchors.top: heading.bottom
 		anchors.topMargin: 25
 		anchors.horizontalCenter: parent.horizontalCenter
-		text: "00:00:00"
+		text: "Schwimmer im Wasser: 0; Zeit: 00:00:00"
 		font.pixelSize: 24
 		font.weight: Font.Bold
 		visible: false
@@ -113,7 +115,7 @@ Rectangle {
 
 	TeilnehmerListView {
 		id: teilnehmerView
-		anchors.top: timeView.bottom
+		anchors.top: statusText.bottom
 		anchors.bottom: button.top
 		anchors.topMargin: 10
 		anchors.bottomMargin: 10
@@ -124,7 +126,7 @@ Rectangle {
 
 	AddTeilnehmerForm {
 		id: addForm
-		anchors.top: timeView.bottom
+		anchors.top: statusText.bottom
 		anchors.bottom: button.top
 		anchors.topMargin: 10
 		anchors.bottomMargin: 10
@@ -143,7 +145,10 @@ Rectangle {
 		interval: 500;
 		running: false;
 		repeat: true
-		onTriggered: timeView.text = getNeededTime(root.startZeit, Date.now());
+		onTriggered: {
+			var time = getNeededTime(root.startZeit, Date.now());
+			statusText.text = "Schwimmer im Wasser: " + activeSwimmer + "; Zeit: " + time;
+		}
 	}
 
 	Rectangle {
@@ -224,7 +229,7 @@ Rectangle {
 					db.transaction(function(tx) {
 						tx.executeSql("update Event set Endzeit=\"" + Date.now() + "\" WHERE ID = \"" + eventId + "\"");
 					});
-					timeView.text = "Beendet nach " + getNeededTime(root.startZeit, root.endZeit);
+					statusText.text = "Beendet nach " + getNeededTime(root.startZeit, root.endZeit);
 				}
 				else if(root.state == "done") {
 					fileIO.openFileDlg();
@@ -233,83 +238,83 @@ Rectangle {
 						fileIO.writeLine(heading.text);
 						fileIO.writeLine("");
 						var line;
-						fileIO.writeLine("Alle");
 						db.transaction(function(tx) {
-							var rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' ORDER BY Endzeit;");
-							console.log("exporting rows: " + rs.rows.length);
+							var rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' ORDER BY Endzeit;");
+							fileIO.writeLine("Gesamtwertung");
 							for(var i = 0; i < rs.rows.length; i++) {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
 								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
-								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
+								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
 							}
 							fileIO.writeLine("");
 
-							fileIO.writeLine("Männer");
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Endzeit;");
-							console.log("exporting rows: " + rs.rows.length);
+							fileIO.writeLine("Wertung Männer");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Endzeit;");
 							for(var i = 0; i < rs.rows.length; i++) {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
 								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
-								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
+								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
 							}
 							fileIO.writeLine("");
 
-							fileIO.writeLine("Frauen");
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Endzeit;");
-							console.log("exporting rows: " + rs.rows.length);
+							fileIO.writeLine("Wertung Frauen");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Endzeit;");
 							for(var i = 0; i < rs.rows.length; i++) {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
 								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
-								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit);
+								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
+								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
 							}
 							fileIO.writeLine("");
 
-							fileIO.writeLine("Männer");
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag ASC LIMIT 1;");
-							console.log("exporting rows: " + rs.rows.length);
+							fileIO.writeLine("Männer Jüngster/Ältester");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag DESC LIMIT 1;");
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
 							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
-							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
+							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
 
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag DESC LIMIT 1;");
-							console.log("exporting rows: " + rs.rows.length);
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"m\" ORDER BY Gebtag ASC LIMIT 1;");
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
 							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
-							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
+							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
 							fileIO.writeLine("");
 
-							fileIO.writeLine("Frauen");
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag ASC LIMIT 1;");
-							console.log("exporting rows: " + rs.rows.length);
+							fileIO.writeLine("Frauen Jüngste/Älteste");
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag DESC LIMIT 1;");
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
 							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
-							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
+							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
 
-							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag DESC LIMIT 1;");
-							console.log("exporting rows: " + rs.rows.length);
+							rs = tx.executeSql("SELECT Vorname, Nachname, Gebtag, Endzeit, Visitor FROM Teilnehmer WHERE Event_ID == '" + eventId + "' AND Gender == \"f\" ORDER BY Gebtag ASC LIMIT 1;");
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
 							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
-							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit);
+							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
+							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
 							fileIO.writeLine("");
 						});
@@ -328,14 +333,14 @@ Rectangle {
 		State {
 			name: "running"
 			PropertyChanges { target: btnLabel;			text: "Stop" }
-			PropertyChanges { target: timeView;			visible: true }
+			PropertyChanges { target: statusText;			visible: true }
 			PropertyChanges { target: timer;			running: true }
 			PropertyChanges { target: addTeilnehmer;	visible: false }
 		},
 		State {
 			name: "done"
 			PropertyChanges { target: btnLabel;			text: "Export" }
-			PropertyChanges { target: timeView;			visible: true }
+			PropertyChanges { target: statusText;			visible: true }
 			PropertyChanges { target: timer;			running: false }
 			PropertyChanges { target: addTeilnehmer;	visible: false }
 		}

@@ -99,19 +99,21 @@ Flickable {
 					hoverEnabled: true
 					anchors.fill: parent
 					onClicked: { console.log("big mousearea clicked"); }
-					onEntered: { deleteTeilnehmer.visible = true; }
+					onEntered: { deleteTeilnehmer.visible = (startZeit == 0); }
 					onExited: { deleteTeilnehmer.visible = false; }
 				}
 				MouseArea {
 					hoverEnabled: true
 					anchors.fill: deleteTeilnehmer
 					onClicked: {
-						db.transaction(function(tx) {
-							tx.executeSql("Delete from Teilnehmer where ID == '" + ID + "' LIMIT 1;");
-						});
-						openEvent(eventId);
+						if(startZeit == 0) {
+							db.transaction(function(tx) {
+								tx.executeSql("Delete from Teilnehmer where ID == '" + ID + "' and Event_ID == '" + eventId + "' LIMIT 1;");
+							});
+							openEvent(eventId);
+						}
 					}
-					onEntered: { theX.color = "red"; deleteTeilnehmer.visible = true; }
+					onEntered: { theX.color = "red"; deleteTeilnehmer.visible = (startZeit == 0); }
 					onExited: { theX.color = "white"; deleteTeilnehmer.visible = false; }
 				}
 			}

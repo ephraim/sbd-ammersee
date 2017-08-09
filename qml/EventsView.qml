@@ -7,7 +7,7 @@ Rectangle {
 			events.clear();
 			var rs = tx.executeSql("SELECT * FROM Event ORDER BY EventName");
 			for(var i = 0; i < rs.rows.length; i++)
-				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName });
+				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName, startZeit: rs.rows.item(i).Startzeit });
 		});
 		if(events.count > 0) {
 			eventsList.currentIndex = 0;
@@ -85,6 +85,26 @@ Rectangle {
 					color: delegate.ListView.isCurrentItem ? "white" : ""
 				}
 
+				Item {
+					id: deleteEvent
+					anchors.right: parent.right
+					anchors.top: parent.top
+					anchors.bottom: parent.bottom
+					anchors.topMargin: 2
+					anchors.bottomMargin: 2
+					visible: false
+					width: 25
+					height: parent.height
+					opacity: 0.5
+					Text {
+						id: theEventX
+						anchors.centerIn: parent
+						text: "X"
+						font.pixelSize: 16
+						color: "white"
+					}
+				}
+
 				MouseArea {
 					hoverEnabled: true
 					anchors.fill: parent
@@ -94,6 +114,7 @@ Rectangle {
 						eventsList.currentIndex = index;
 						delegateContent.color   = "white";
 						hoverHighlight.state    = "invisible";
+						deleteEvent.visible		= (startZeit == 0);
 						openEvent(eventid);
 					}
 					onEntered: {
@@ -101,6 +122,8 @@ Rectangle {
 							delegateContent.color  = "white";
 							hoverHighlight.state   = "visible";
 						}
+						else
+							deleteEvent.visible = (startZeit == 0);
 					}
 					onExited: {
 						if(!delegate.ListView.isCurrentItem) {
@@ -108,8 +131,26 @@ Rectangle {
 							hoverHighlight.state   = "";
 							hoverHighlight.state   = "invisible";
 						}
+
+						deleteEvent.visible = false;
 					}
 				}
+
+				MouseArea {
+					hoverEnabled: true
+					anchors.fill: deleteEvent
+					onClicked: {
+						if(startZeit == 0) {
+							db.transaction(function(tx) {
+								tx.executeSql("Delete from Event Where ID == '" + eventid + "' LIMIT 1;");
+								tx.executeSql("Delete from Teilnehmer Where Event_ID == '" + eventid + "'");
+							});
+							reloadEventsFromDb();
+						}
+					}
+					onEntered: { deleteEvent.visible = (startZeit == 0); theEventX.color = "red"; }
+					onExited: { theEventX.color = "white"; }
+				}				
 			}
 		}
 		highlight: Component {
@@ -123,7 +164,7 @@ Rectangle {
 					SmoothedAnimation {
 						duration: 1000
 					}
-				}
+				}				
 			}
 		}
 		highlightFollowsCurrentItem: false

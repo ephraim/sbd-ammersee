@@ -1,0 +1,60 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "taskName": "qmake",
+            "command": "qmake",
+            "type": "shell",
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "taskName": "make all",
+            "command": "make all",
+            "type": "shell",
+            "dependsOn": "qmake",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            },
+            "group": "build"
+        },
+        {
+            "taskName": "make clean",
+            "command": "make clean",
+            "type": "shell",
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "taskName": "execute",
+            "command": "${workspaceRoot}/build/release/ammersee --port /dev/ttyACM0",
+            "type": "shell",
+            "dependsOn": "make all",
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}
