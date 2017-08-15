@@ -1,0 +1,8 @@
+Event/Teilnehmer löschen nur auf Nachfrage
+Teilnehmer add Button weiter nach rechts ausserhalb der Liste
+Event/Teilnehmer editierbar
+Teilnehmer hinzufügen verteilt auf mehreren Rechnern?
+SQL Fehlerbehandlung/Meldungen ausgeben
+
+
+
