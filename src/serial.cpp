@@ -74,7 +74,7 @@ bool Serial::setParameters()
 #else
 	struct termios ts;
 	struct termios tmp;
-	speed_t speed;
+	speed_t speed = B115200;
 
 	if(fd < 0) {
 		cerr << "ERROR: filedescriptor invalid. Could not set parameters" << endl;
@@ -83,9 +83,10 @@ bool Serial::setParameters()
 
 	switch(baudrate) {
 		case 9600: speed = B9600; break;
+		case 115200: speed = B115200; break;
 		default:
 			cerr << "WARNING: unknown baudrate specified: " << dec << baudrate << ". Using default: 115200" << endl;
-		case 115200: speed = B115200; break;
+			break;
 	}
 
 	cfmakeraw(&ts);
