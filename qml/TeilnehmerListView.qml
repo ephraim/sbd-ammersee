@@ -79,42 +79,6 @@ Flickable {
 						}
 					}
 				}
-				Item {
-					id: deleteTeilnehmer
-					anchors.right: parent.right
-					anchors.top: parent.top
-					visible: false
-					width: 25
-					height: 25
-					opacity: 0.5
-					Text {
-						id: theX
-						anchors.centerIn: parent
-						text: "X"
-						font.pixelSize: 20
-						color: "white"
-					}
-				}
-				MouseArea {
-					hoverEnabled: true
-					anchors.fill: parent
-					onEntered: { deleteTeilnehmer.visible = (startZeit == 0); }
-					onExited: { deleteTeilnehmer.visible = false; }
-				}
-				MouseArea {
-					hoverEnabled: true
-					anchors.fill: deleteTeilnehmer
-					onClicked: {
-						if(startZeit == 0) {
-							db.transaction(function(tx) {
-								tx.executeSql("Delete from Teilnehmer where ID == '" + ID + "' and Event_ID == '" + eventId + "' LIMIT 1;");
-							});
-							openEvent(eventId);
-						}
-					}
-					onEntered: { theX.color = "red"; deleteTeilnehmer.visible = (startZeit == 0); }
-					onExited: { theX.color = "white"; deleteTeilnehmer.visible = false; }
-				}
 			}
 		}
 	}
