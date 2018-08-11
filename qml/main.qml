@@ -9,7 +9,7 @@ ApplicationWindow {
 	visible: true
 	visibility: "FullScreen"
 	title: qsTr("SB Delphin Augsburg 03 - Ammerseeschwimmen")
-	property var db: LocalStorage.openDatabaseSync("schimmen.sqlite", "1.0", "The Example QML SQL!", 1000000);
+	property var db: LocalStorage.openDatabaseSync("schimmen.sqlite", "1.0", "SBDelphin Ammerseeschwimmen Database", 1000000);
 
 	Component.onCompleted: {
 		db.transaction(function(tx) {
