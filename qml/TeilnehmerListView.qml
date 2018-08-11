@@ -28,6 +28,19 @@ Flickable {
 				anchors.rightMargin: 5
 				width: parent.width
 				color: Visitor ? "lightgrey" : "#5c8ab5"
+				MouseArea {
+					anchors.fill: parent
+					hoverEnabled: true
+					onClicked: {
+						showAddTeilnehmerForm(teilnehmer.get(index));
+					}
+					onEntered: {
+						parent.color = "#8cbae5"
+					}
+					onExited: {
+						parent.color = Visitor ? "lightgrey" : "#5c8ab5"
+					}
+				}
 				Column {
 					id: leftColumn
 					anchors.top: parent.top
@@ -53,7 +66,7 @@ Flickable {
 							font.pixelSize: 12
 						}
 						Text {
-							text: formatGebtag(Gebtag)
+							text: formatGebtagForUser(Gebtag)
 							font.pixelSize: 12
 						}
 						Text {
@@ -78,7 +91,7 @@ Flickable {
 							font.pixelSize: 32
 						}
 					}
-				}
+				}				
 			}
 		}
 	}

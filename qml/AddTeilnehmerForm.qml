@@ -5,6 +5,7 @@ Rectangle {
 	id: root
 	property var formwidth: 400
 	property var rowheight: 24
+	property var teilnehmerID: -1
 
 	function pad(s, size) {
 		s = String(s);
@@ -12,26 +13,40 @@ Rectangle {
 		return s;
 	}
 
-	function formatGebtag(gebtag)
+	function formatGebtagForDB(gebtag)
 	{
 		var date = Date.fromLocaleDateString(Qt.locale("de_DE"), gebtag, "dd.MM.yyyy");
 		return date.getFullYear() + "-" + pad(date.getMonth()+1, 2) + "-" + pad(date.getDate(), 2);
 	}
 
-	function clear() {
-		startnummer.entry = 1;
-		db.transaction(function(tx) {
-			var rs = tx.executeSql("select Startnr from Teilnehmer Where Event_ID == '" + eventId + "' Order By Startnr Desc Limit 1")
-			if(rs.rows.length == 1)
-				startnummer.entry = rs.rows.item(0).Startnr + 1;
-		});
-		vorname.entry = "";
-		nachname.entry = "";
-		geburtstag.entry = "";
-		rbGenderMale.checked = true;
-		rbGenderFemale.checked = false;
-		cbVisitor.checked = false;
-		tagId.text = "";
+	function clear(teilnehmer) {
+		if(teilnehmer == null) {
+			startnummer.entry = 1;
+			db.transaction(function(tx) {
+				var rs = tx.executeSql("select Startnr from Teilnehmer Where Event_ID == '" + eventId + "' Order By Startnr Desc Limit 1")
+				if(rs.rows.length == 1)
+					startnummer.entry = rs.rows.item(0).Startnr + 1;
+			});
+			vorname.entry = "";
+			nachname.entry = "";
+			geburtstag.entry = "";
+			rbGenderMale.checked = true;
+			rbGenderFemale.checked = false;
+			cbVisitor.checked = false;
+			tagId.text = "";
+			teilnehmerID = -1;
+		}
+		else {
+			startnummer.entry = teilnehmer.Startnr;
+			vorname.entry = teilnehmer.Vorname;
+			nachname.entry = teilnehmer.Nachname;
+			geburtstag.entry = formatGebtagForUser(teilnehmer.Gebtag);
+			rbGenderMale.checked = teilnehmer.Gender == "m";
+			rbGenderFemale.checked = teilnehmer.Gender != "m";
+			cbVisitor.checked = teilnehmer.Visitor != 0;
+			tagId.text = teilnehmer.IDTAG;
+			teilnehmerID = teilnehmer.ID;
+		}
 	}
 
 	function onFoundTeilnehmerTag(result, tagID) {
@@ -188,19 +203,33 @@ Rectangle {
 		height: root.rowheight
 		anchors.horizontalCenter: parent.horizontalCenter
 		Button {
-			text: "Hinzufügen"
+			id: btnSubmit
+			text: teilnehmerID == -1 ? "Hinzufügen" : "Ändern"
 			onClicked: {
-				var gebtag = formatGebtag(geburtstag.entry);
+				var gebtag = formatGebtagForDB(geburtstag.entry);
 				db.transaction(function(tx) {
-					var query = "INSERT INTO Teilnehmer ('Vorname', 'Nachname', 'Gebtag', 'Startnr', 'Gender', 'Visitor', 'IDTAG', 'Event_ID') VALUES (";
-					query += "'" + vorname.entry + "',";
-					query += "'" + nachname.entry + "',";
-					query += "'" + gebtag + "',";
-					query += "'" + startnummer.entry + "',";
-					query += "'" + (rbGenderMale.checked ? "m" : "f") + "',";
-					query += "'" + (cbVisitor.checked ? 1 : 0) + "',";
-					query += "'" + tagId.text + "',";
-					query += "'" + eventId + "');";
+					if(teilnehmerID == -1) {
+						var query = "INSERT INTO Teilnehmer ('Vorname', 'Nachname', 'Gebtag', 'Startnr', 'Gender', 'Visitor', 'IDTAG', 'Event_ID') VALUES (";
+						query += "'" + vorname.entry + "',";
+						query += "'" + nachname.entry + "',";
+						query += "'" + gebtag + "',";
+						query += "'" + startnummer.entry + "',";
+						query += "'" + (rbGenderMale.checked ? "m" : "f") + "',";
+						query += "'" + (cbVisitor.checked ? 1 : 0) + "',";
+						query += "'" + tagId.text + "',";
+						query += "'" + eventId + "');";
+					}
+					else {
+						var query = "UPDATE Teilnehmer SET ";
+						query += "Vorname='" + vorname.entry + "',";
+						query += "Nachname='" + nachname.entry + "',";
+						query += "Gebtag='" + gebtag + "',";
+						query += "Startnr='" + startnummer.entry + "',";
+						query += "Gender='" + (rbGenderMale.checked ? "m" : "f") + "',";
+						query += "Visitor='" + (cbVisitor.checked ? 1 : 0) + "',";
+						query += "IDTAG='" + tagId.text + "'";
+						query += "WHERE ID = '" + teilnehmerID + "'";
+					}
 					var rs = tx.executeSql(query);
 				});
 				openEvent(eventId);

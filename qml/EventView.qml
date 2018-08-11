@@ -20,7 +20,7 @@ Rectangle {
 				for(var i = 0; i < rs.rows.length; i++)
 					teilnehmerView.teilnehmer.append(rs.rows.item(i));
 			}
-			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit == 0 ORDER BY Nachname,Vorname");
+			rs = tx.executeSql("Select * from Teilnehmer Where Event_ID == '" + eventId + "' and Endzeit == 0 ORDER BY Startnr");
 			teilnehmer += rs.rows.length;
 			if (rs.rows.length > 0) {
 				activeSwimmer = rs.rows.length;
@@ -58,7 +58,7 @@ Rectangle {
 		});
 		;
 		if(updateTeilnehmerlist() == 0) {
-			showAddTeilnehmerForm();
+			showAddTeilnehmerForm(null);
 		}
 		else {
 			addForm.visible = false;
@@ -78,14 +78,14 @@ Rectangle {
 		return pad(date.getUTCHours(), 2) + ":" + pad(date.getUTCMinutes(), 2) + ":" + pad(date.getUTCSeconds(), 2)
 	}
 
-	function formatGebtag(gebtag)
+	function formatGebtagForUser(gebtag)
 	{
 		return Date.fromLocaleDateString(Qt.locale("de_DE"), gebtag, "yyyy-MM-dd").toLocaleDateString(Qt.locale("de_DE"), "dd.MM.yyyy");
 	}
-	function showAddTeilnehmerForm()
+	function showAddTeilnehmerForm(teilnehmer)
 	{
 		teilnehmerView.visible = false;
-		addForm.clear();
+		addForm.clear(teilnehmer);
 		addForm.visible = true;
 	}
 
@@ -185,7 +185,7 @@ Rectangle {
 		MouseArea {
 			hoverEnabled: true
 			anchors.fill: parent
-			onClicked: showAddTeilnehmerForm()
+			onClicked: showAddTeilnehmerForm(null)
 			onEntered: parent.color = "#5c8ab5"
 			onExited:  parent.color = "#2c5a85"
 		}
@@ -257,7 +257,7 @@ Rectangle {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
-								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += formatGebtagForUser(rs.rows.item(i).Gebtag) + ", ";
 								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
 								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
@@ -270,7 +270,7 @@ Rectangle {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
-								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += formatGebtagForUser(rs.rows.item(i).Gebtag) + ", ";
 								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
 								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
@@ -283,7 +283,7 @@ Rectangle {
 								line = "";
 								line += rs.rows.item(i).Vorname + ", ";
 								line += rs.rows.item(i).Nachname + ", ";
-								line += formatGebtag(rs.rows.item(i).Gebtag) + ", ";
+								line += formatGebtagForUser(rs.rows.item(i).Gebtag) + ", ";
 								line += getNeededTime(root.startZeit, rs.rows.item(i).Endzeit) + ", ";
 								line += rs.rows.item(i).Visitor ? "Gast" : "Mitglied";
 								fileIO.writeLine(line);
@@ -295,7 +295,7 @@ Rectangle {
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
-							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += formatGebtagForUser(rs.rows.item(0).Gebtag) + ", ";
 							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
 							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
@@ -304,7 +304,7 @@ Rectangle {
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
-							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += formatGebtagForUser(rs.rows.item(0).Gebtag) + ", ";
 							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
 							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
@@ -315,7 +315,7 @@ Rectangle {
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
-							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += formatGebtagForUser(rs.rows.item(0).Gebtag) + ", ";
 							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
 							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
@@ -324,7 +324,7 @@ Rectangle {
 							line = "";
 							line += rs.rows.item(0).Vorname + ", ";
 							line += rs.rows.item(0).Nachname + ", ";
-							line += formatGebtag(rs.rows.item(0).Gebtag) + ", ";
+							line += formatGebtagForUser(rs.rows.item(0).Gebtag) + ", ";
 							line += getNeededTime(root.startZeit, rs.rows.item(0).Endzeit) + ", ";
 							line += rs.rows.item(0).Visitor ? "Gast" : "Mitglied";
 							fileIO.writeLine(line);
