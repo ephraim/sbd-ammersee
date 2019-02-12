@@ -4,7 +4,9 @@
 #else
 #define O_NOCTTY 0
 #endif
+#ifdef __GNUC__
 #include <unistd.h>
+#endif
 #include <stdint.h>
 #include <vector>
 #include <string>

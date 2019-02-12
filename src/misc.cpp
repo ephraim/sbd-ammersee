@@ -1,4 +1,5 @@
 #include "misc.h"
+#include <boost/algorithm/hex.hpp>
 
 std::string b2h(std::vector<uint8_t> v) {
 	std::string res;

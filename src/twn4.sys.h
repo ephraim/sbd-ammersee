@@ -53,9 +53,9 @@
 //
 // ******************************************************************
 
-#if !defined(__TWN4_SYS_H__) || defined(__TWN4_SYS_C__)
-#ifndef __TWN4_SYS_H__
-#define __TWN4_SYS_H__
+#if !defined(TWN4_SYS_H) || defined(__TWN4_SYS_C__)
+#ifndef TWN4_SYS_H
+#define TWN4_SYS_H
 #endif
 
 // Best viewed with tab width set to 4
@@ -68,16 +68,6 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#ifndef true
-# define true			1
-#endif
-
-#ifndef false
-# define false			0
-#endif
-
-typedef unsigned char byte;
 
 #define MAX(a,b)    	((a) > (b) ? (a) : (b))
 #define MIN(a,b)    	((a) < (b) ? (a) : (b))
@@ -288,9 +278,10 @@ typedef unsigned char byte;
 // ******************************************************************
 // ****** Invoke System Function ************************************
 // ******************************************************************
-
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type"
+#endif
 
 #ifdef __TWN4_SYS_C__
 
@@ -405,11 +396,11 @@ SYSFUNC(API_SYS, 4,int GetVersionString(char *VersionString,int MaxLen))
 SYSFUNC(API_SYS, 5,int GetUSBType(void))
 SYSFUNC(API_SYS, 6,int GetDeviceType(void))
 SYSFUNC(API_SYS, 7,int Sleep(unsigned long Ticks,unsigned long Flags))
-SYSFUNC(API_SYS, 8,void GetDeviceUID(byte *UID))
-SYSFUNC(API_SYS, 9,bool SetParameters(const byte *TLV,int ByteCount))
+SYSFUNC(API_SYS, 8,void GetDeviceUID(unsigned char *UID))
+SYSFUNC(API_SYS, 9,bool SetParameters(const unsigned char *TLV,int ByteCount))
 SYSFUNC(API_SYS,10,unsigned int GetLastError(void))
 SYSFUNC(API_SYS,11,int Diagnostic(int Mode,const void *In,int InLen,void *Out,int *OutLen,int MaxOutLen))
-SYSFUNC(API_SYS,12,bool ProgramApp(const byte *AppData,int AppDataLength))
+SYSFUNC(API_SYS,12,bool ProgramApp(const unsigned char *AppData,int AppDataLength))
 
 // ******************************************************************
 // ****** Standard I/O Functions ************************************
@@ -435,26 +426,33 @@ SYSFUNC(API_SYS,12,bool ProgramApp(const byte *AppData,int AppDataLength))
 #define DIR_OUT             0
 #define DIR_IN              1
 
-#define COM_WORDLENGTH_8        ((byte)8)
+#define COM_WORDLENGTH_8        ((unsigned char)8)
 
-#define COM_PARITY_NONE         ((byte)0)
-#define COM_PARITY_ODD          ((byte)1)
-#define COM_PARITY_EVEN         ((byte)2)
+#define COM_PARITY_NONE         ((unsigned char)0)
+#define COM_PARITY_ODD          ((unsigned char)1)
+#define COM_PARITY_EVEN         ((unsigned char)2)
 
-#define COM_STOPBITS_0_5        ((byte)1)
-#define COM_STOPBITS_1          ((byte)2)
-#define COM_STOPBITS_1_5        ((byte)3)
-#define COM_STOPBITS_2          ((byte)4)
+#define COM_STOPBITS_0_5        ((unsigned char)1)
+#define COM_STOPBITS_1          ((unsigned char)2)
+#define COM_STOPBITS_1_5        ((unsigned char)3)
+#define COM_STOPBITS_2          ((unsigned char)4)
 
-#define COM_FLOWCONTROL_NONE    ((byte)0)
+#define COM_FLOWCONTROL_NONE    ((unsigned char)0)
 
-typedef struct __attribute__((__packed__))
+#ifdef __GNUC__
+#   define PACK __attribute__((__packed__))
+#elif _MSC_VER
+#   define PACK
+#   pragma pack(push,1)
+#endif
+
+typedef struct PACK
 {
     unsigned long BaudRate;
-    byte WordLength;
-    byte Parity;
-    byte StopBits;
-    byte FlowControl;
+    unsigned char WordLength;
+    unsigned char Parity;
+    unsigned char StopBits;
+    unsigned char FlowControl;
 } TCOMParameters;
 
 #define USB_DEVICE_STATE_DEFAULT        1
@@ -463,8 +461,8 @@ typedef struct __attribute__((__packed__))
 #define USB_DEVICE_STATE_SUSPENDED      4
 #endif
 
-SYSFUNC(API_IO, 0,void WriteByte(int Channel,byte Byte))
-SYSFUNC(API_IO, 1,byte ReadByte(int Channel))
+SYSFUNC(API_IO, 0,void WriteByte(int Channel,unsigned char Byte))
+SYSFUNC(API_IO, 1,unsigned char ReadByte(int Channel))
 SYSFUNC(API_IO, 2,bool TestEmpty(int Channel,int Dir))
 SYSFUNC(API_IO, 3,bool TestFull(int Channel,int Dir))
 SYSFUNC(API_IO, 4,int  GetBufferSize(int Channel,int Dir))
@@ -474,33 +472,33 @@ SYSFUNC(API_IO, 9,bool SetCOMParameters(int Channel,TCOMParameters *COMParameter
 SYSFUNC(API_IO,10,int  GetUSBDeviceState(void))
 SYSFUNC(API_IO,11,int  GetHostChannel(void))
 SYSFUNC(API_IO,12,void USBRemoteWakeup(void))
-SYSFUNC(API_IO,13,int  WriteBytes(int Channel, const byte* Bytes, int ByteCount))
-SYSFUNC(API_IO,14,int  ReadBytes(int Channel, byte* Bytes, int ByteCount))
+SYSFUNC(API_IO,13,int  WriteBytes(int Channel, const unsigned char* Bytes, int ByteCount))
+SYSFUNC(API_IO,14,int  ReadBytes(int Channel, unsigned char* Bytes, int ByteCount))
 
 // ******************************************************************
 // ****** Memory Functions ******************************************
 // ******************************************************************
 
-SYSFUNC(API_MEM, 0,bool CompBytes(const byte *Data1,const byte *Data2,int ByteCount))
-SYSFUNC(API_MEM, 1,void CopyBytes(byte *DestBytes,const byte *SourceBytes,int ByteCount))
-SYSFUNC(API_MEM, 2,void FillBytes(byte *Dest,byte Value,int ByteCount))
-SYSFUNC(API_MEM, 3,void SwapBytes(byte *Data,int ByteCount))
-SYSFUNC(API_MEM, 4,bool ReadBit(const byte *Byte,int BitNr))
-SYSFUNC(API_MEM, 5,void WriteBit(byte *Byte,int BitNr,bool Value))
-SYSFUNC(API_MEM, 6,void CopyBit(byte *Dest,int DestBitNr,const byte *Source,int SourceBitNr))
-SYSFUNC(API_MEM, 7,bool CompBits(const byte *Data1,int Data1StartBit,const byte *Data2,int Data2StartBit,int BitCount))
-SYSFUNC(API_MEM, 8,void CopyBits(byte *DestBits,int StartDestBit,const byte *SourceBits,int StartSourceBit,int BitCount))
-SYSFUNC(API_MEM, 9,void FillBits(byte *Dest,int StartBit,bool Value,int BitCount))
-SYSFUNC(API_MEM,10,void SwapBits(byte *Data,int StartBit,int BitCount))
-SYSFUNC(API_MEM,11,int  CountBits(const byte *Data,int StartBit,bool Value,int BitCount))
+SYSFUNC(API_MEM, 0,bool CompBytes(const unsigned char *Data1,const unsigned char *Data2,int ByteCount))
+SYSFUNC(API_MEM, 1,void CopyBytes(unsigned char *DestBytes,const unsigned char *SourceBytes,int ByteCount))
+SYSFUNC(API_MEM, 2,void FillBytes(unsigned char *Dest,unsigned char Value,int ByteCount))
+SYSFUNC(API_MEM, 3,void SwapBytes(unsigned char *Data,int ByteCount))
+SYSFUNC(API_MEM, 4,bool ReadBit(const unsigned char *Byte,int BitNr))
+SYSFUNC(API_MEM, 5,void WriteBit(unsigned char *Byte,int BitNr,bool Value))
+SYSFUNC(API_MEM, 6,void CopyBit(unsigned char *Dest,int DestBitNr,const unsigned char *Source,int SourceBitNr))
+SYSFUNC(API_MEM, 7,bool CompBits(const unsigned char *Data1,int Data1StartBit,const unsigned char *Data2,int Data2StartBit,int BitCount))
+SYSFUNC(API_MEM, 8,void CopyBits(unsigned char *DestBits,int StartDestBit,const unsigned char *SourceBits,int StartSourceBit,int BitCount))
+SYSFUNC(API_MEM, 9,void FillBits(unsigned char *Dest,int StartBit,bool Value,int BitCount))
+SYSFUNC(API_MEM,10,void SwapBits(unsigned char *Data,int StartBit,int BitCount))
+SYSFUNC(API_MEM,11,int  CountBits(const unsigned char *Data,int StartBit,bool Value,int BitCount))
 
 // ******************************************************************
 // ****** Conversion Functions **************************************
 // ******************************************************************
 
-SYSFUNC(API_CONV, 0,int ScanHexChar(byte Char))
-SYSFUNC(API_CONV, 1,int ScanHexString(byte *ASCII,int ByteCount))
-SYSFUNC(API_CONV, 2,int ConvertBinaryToString(const byte *SourceBits,int StartBit,int BitCnt,char *String,int Radix,int MinDigits,int MaxDigits))
+SYSFUNC(API_CONV, 0,int ScanHexChar(unsigned char Char))
+SYSFUNC(API_CONV, 1,int ScanHexString(unsigned char *ASCII,int ByteCount))
+SYSFUNC(API_CONV, 2,int ConvertBinaryToString(const unsigned char *SourceBits,int StartBit,int BitCnt,char *String,int Radix,int MinDigits,int MaxDigits))
 
 // ******************************************************************
 // ****** Peripheral Functions **************************************
@@ -576,8 +574,8 @@ SYSFUNC(API_PERIPH, 8,void DiagLEDOn(void))
 SYSFUNC(API_PERIPH, 9,void DiagLEDOff(void))
 SYSFUNC(API_PERIPH,10,void DiagLEDToggle(void))
 SYSFUNC(API_PERIPH,11,bool DiagLEDIsOn(void))
-SYSFUNC(API_PERIPH,12,void SendWiegand(int GPIOData0,int GPIOData1,int PulseTime,int IntervalTime,byte *Bits,int BitCount))
-SYSFUNC(API_PERIPH,13,void SendOmron(int GPIOClock,int GPIOData,int T1,int T2,int T3,byte *Bits,int BitCount))
+SYSFUNC(API_PERIPH,12,void SendWiegand(int GPIOData0,int GPIOData1,int PulseTime,int IntervalTime,unsigned char *Bits,int BitCount))
+SYSFUNC(API_PERIPH,13,void SendOmron(int GPIOClock,int GPIOData,int T1,int T2,int T3,unsigned char *Bits,int BitCount))
 SYSFUNC(API_PERIPH,14,bool GPIOPlaySequence(const int *NewSequence,int ByteCount))
 SYSFUNC(API_PERIPH,15,void GPIOStopSequence(void))
 
@@ -629,7 +627,7 @@ SYSFUNC(API_PERIPH,15,void GPIOStopSequence(void))
 
 #endif
 
-SYSFUNC(API_RF, 0,bool SearchTag(int *TagType,int *IDBitCount,byte *ID,int MaxIDBytes))
+SYSFUNC(API_RF, 0,bool SearchTag(int *TagType,int *IDBitCount,unsigned char *ID,int MaxIDBytes))
 SYSFUNC(API_RF, 1,void SetRFOff(void))
 SYSFUNC(API_RF, 2,void SetTagTypes(unsigned int LFTagTypes,unsigned int HFTagTypes))
 SYSFUNC(API_RF, 3,void GetTagTypes(unsigned int *LFTagTypes,unsigned int *HFTagTypes))
@@ -639,53 +637,53 @@ SYSFUNC(API_RF, 4,void GetSupportedTagTypes(unsigned int *LFTagTypes,unsigned in
 // ****** TILF Functions ********************************************
 // ******************************************************************
 
-SYSFUNC(API_TILF, 0,bool TILF_SearchTag(int *IDBitCount,byte *ID,int MaxIDBytes))
-SYSFUNC(API_TILF, 1,bool TILF_ChargeOnlyRead(byte *ReadData))
-SYSFUNC(API_TILF, 2,bool TILF_ChargeOnlyReadLo(byte *ReadData))
-SYSFUNC(API_TILF, 3,bool TILF_SPProgramPage(const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF, 4,bool TILF_SPProgramPageLo(const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF, 5,bool TILF_MPGeneralReadPage(int Address,byte *ReadData))
-SYSFUNC(API_TILF, 6,bool TILF_MPSelectiveReadPage(int Address,const byte *SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF, 7,bool TILF_MPProgramPage(int Address,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF, 8,bool TILF_MPSelectiveProgramPage(int Address,const byte *SelectiveAddress,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF, 9,bool TILF_MPLockPage(int Address,byte *ReadData))
-SYSFUNC(API_TILF,10,bool TILF_MPSelectiveLockPage(int Address,const byte *SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF,11,bool TILF_MPGeneralReadPageLo(int Address,byte *ReadData))
-SYSFUNC(API_TILF,12,bool TILF_MPSelectiveReadPageLo(int Address,const byte *SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF,13,bool TILF_MPProgramPageLo(int Address,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF,14,bool TILF_MPSelectiveProgramPageLo(int Address,const byte *SelectiveAddress,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF,15,bool TILF_MPLockPageLo(int Address,byte *ReadData))
-SYSFUNC(API_TILF,16,bool TILF_MPSelectiveLockPageLo(int Address,const byte *SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF,17,bool TILF_MUGeneralReadPage(int Address,byte *ReadData))
-SYSFUNC(API_TILF,18,bool TILF_MUSelectiveReadPage(int Address,int SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF,19,bool TILF_MUSpecialReadPage(int Address,const byte *SpecialAddress1,const byte *SpecialAddress2,byte *ReadData))
-SYSFUNC(API_TILF,20,bool TILF_MUProgramPage(int Address,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF,21,bool TILF_MUSelectiveProgramPage(int Address,int SelectiveAddress,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF,22,bool TILF_MUSpecialProgramPage(int Address,const byte *SpecialAddress1,const byte *SpecialAddress2,const byte *WriteData,byte *ReadData))
-SYSFUNC(API_TILF,23,bool TILF_MULockPage(int Address,byte *ReadData))
-SYSFUNC(API_TILF,24,bool TILF_MUSelectiveLockPage(int Address,int SelectiveAddress,byte *ReadData))
-SYSFUNC(API_TILF,25,bool TILF_MUSpecialLockPage(int Address,const byte *SpecialAddress1,const byte *SpecialAddress2,byte *ReadData))
+SYSFUNC(API_TILF, 0,bool TILF_SearchTag(int *IDBitCount,unsigned char *ID,int MaxIDBytes))
+SYSFUNC(API_TILF, 1,bool TILF_ChargeOnlyRead(unsigned char *ReadData))
+SYSFUNC(API_TILF, 2,bool TILF_ChargeOnlyReadLo(unsigned char *ReadData))
+SYSFUNC(API_TILF, 3,bool TILF_SPProgramPage(const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF, 4,bool TILF_SPProgramPageLo(const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF, 5,bool TILF_MPGeneralReadPage(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF, 6,bool TILF_MPSelectiveReadPage(int Address,const unsigned char *SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF, 7,bool TILF_MPProgramPage(int Address,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF, 8,bool TILF_MPSelectiveProgramPage(int Address,const unsigned char *SelectiveAddress,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF, 9,bool TILF_MPLockPage(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF,10,bool TILF_MPSelectiveLockPage(int Address,const unsigned char *SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF,11,bool TILF_MPGeneralReadPageLo(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF,12,bool TILF_MPSelectiveReadPageLo(int Address,const unsigned char *SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF,13,bool TILF_MPProgramPageLo(int Address,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF,14,bool TILF_MPSelectiveProgramPageLo(int Address,const unsigned char *SelectiveAddress,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF,15,bool TILF_MPLockPageLo(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF,16,bool TILF_MPSelectiveLockPageLo(int Address,const unsigned char *SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF,17,bool TILF_MUGeneralReadPage(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF,18,bool TILF_MUSelectiveReadPage(int Address,int SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF,19,bool TILF_MUSpecialReadPage(int Address,const unsigned char *SpecialAddress1,const unsigned char *SpecialAddress2,unsigned char *ReadData))
+SYSFUNC(API_TILF,20,bool TILF_MUProgramPage(int Address,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF,21,bool TILF_MUSelectiveProgramPage(int Address,int SelectiveAddress,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF,22,bool TILF_MUSpecialProgramPage(int Address,const unsigned char *SpecialAddress1,const unsigned char *SpecialAddress2,const unsigned char *WriteData,unsigned char *ReadData))
+SYSFUNC(API_TILF,23,bool TILF_MULockPage(int Address,unsigned char *ReadData))
+SYSFUNC(API_TILF,24,bool TILF_MUSelectiveLockPage(int Address,int SelectiveAddress,unsigned char *ReadData))
+SYSFUNC(API_TILF,25,bool TILF_MUSpecialLockPage(int Address,const unsigned char *SpecialAddress1,const unsigned char *SpecialAddress2,unsigned char *ReadData))
 
 // ******************************************************************
 // ****** Hitag 1/S Functions ***************************************
 // ******************************************************************
 
-SYSFUNC(API_HITAG1S, 0,bool Hitag1S_SearchTag(int *IDBitCount,byte *ID,int MaxIDBytes))
-SYSFUNC(API_HITAG1S, 1,bool Hitag1S_ReadPage(int PageAddress,byte *Page))
-SYSFUNC(API_HITAG1S, 2,bool Hitag1S_ReadBlock(int BlockAddress,byte *Block,byte *BytesRead))
-SYSFUNC(API_HITAG1S, 3,bool Hitag1S_WritePage(int PageAddress,const byte *Page))
-SYSFUNC(API_HITAG1S, 4,bool Hitag1S_WriteBlock(int BlockAddress,const byte *Block,byte *BytesWritten))
+SYSFUNC(API_HITAG1S, 0,bool Hitag1S_SearchTag(int *IDBitCount,unsigned char *ID,int MaxIDBytes))
+SYSFUNC(API_HITAG1S, 1,bool Hitag1S_ReadPage(int PageAddress,unsigned char *Page))
+SYSFUNC(API_HITAG1S, 2,bool Hitag1S_ReadBlock(int BlockAddress,unsigned char *Block,unsigned char *BytesRead))
+SYSFUNC(API_HITAG1S, 3,bool Hitag1S_WritePage(int PageAddress,const unsigned char *Page))
+SYSFUNC(API_HITAG1S, 4,bool Hitag1S_WriteBlock(int BlockAddress,const unsigned char *Block,unsigned char *BytesWritten))
 SYSFUNC(API_HITAG1S, 5,bool Hitag1S_Halt(void))
 
 // ******************************************************************
 // ****** Hitag 2 Functions *****************************************
 // ******************************************************************
 
-SYSFUNC(API_HITAG2, 0,bool Hitag2_SearchTag(int *IDBitCount,byte *ID,int MaxIDBytes))
-SYSFUNC(API_HITAG2, 1,bool Hitag2_ReadPage(int PageAddress,byte *Page))
-SYSFUNC(API_HITAG2, 2,bool Hitag2_WritePage(int PageAddress,const byte *Page))
+SYSFUNC(API_HITAG2, 0,bool Hitag2_SearchTag(int *IDBitCount,unsigned char *ID,int MaxIDBytes))
+SYSFUNC(API_HITAG2, 1,bool Hitag2_ReadPage(int PageAddress,unsigned char *Page))
+SYSFUNC(API_HITAG2, 2,bool Hitag2_WritePage(int PageAddress,const unsigned char *Page))
 SYSFUNC(API_HITAG2, 3,bool Hitag2_Halt(void))
-SYSFUNC(API_HITAG2, 4,void Hitag2_SetPassword(const byte *Password))
+SYSFUNC(API_HITAG2, 4,void Hitag2_SetPassword(const unsigned char *Password))
 
 // ******************************************************************
 // ****** SM4X00 Functions ******************************************
@@ -702,11 +700,11 @@ SYSFUNC(API_HITAG2, 4,void Hitag2_SetPassword(const byte *Password))
 
 #endif
 
-SYSFUNC(API_SM4X00, 0,bool SM4X00_GenericRaw(const byte *TXData,int TXDataLength,byte *RXData,int *RXDataLength,int MaxRXDataLength,int Timeout))
-SYSFUNC(API_SM4X00, 1,bool SM4X00_Generic(const byte *TXData,int TXDataLength,byte *RXData,int *RXDataLength,int MaxRXDataLength,int Timeout))
-SYSFUNC(API_SM4X00, 2,bool SM4X00_StartBootloader(byte *TLV,int *TLVLength,int MaxTLVLength))
+SYSFUNC(API_SM4X00, 0,bool SM4X00_GenericRaw(const unsigned char *TXData,int TXDataLength,unsigned char *RXData,int *RXDataLength,int MaxRXDataLength,int Timeout))
+SYSFUNC(API_SM4X00, 1,bool SM4X00_Generic(const unsigned char *TXData,int TXDataLength,unsigned char *RXData,int *RXDataLength,int MaxRXDataLength,int Timeout))
+SYSFUNC(API_SM4X00, 2,bool SM4X00_StartBootloader(unsigned char *TLV,int *TLVLength,int MaxTLVLength))
 SYSFUNC(API_SM4X00, 3,bool SM4X00_EraseFlash(void))
-SYSFUNC(API_SM4X00, 4,bool SM4X00_ProgramBlock(byte *Data,bool *Done))
+SYSFUNC(API_SM4X00, 4,bool SM4X00_ProgramBlock(unsigned char *Data,bool *Done))
 
 // ******************************************************************
 // ****** I2C Functions *********************************************
@@ -725,8 +723,8 @@ SYSFUNC(API_I2C, 0,bool I2CInit(int Mode))
 SYSFUNC(API_I2C, 1,void I2CDeInit(void))
 SYSFUNC(API_I2C, 2,void I2CMasterStart(void))
 SYSFUNC(API_I2C, 3,void I2CMasterStop(void))
-SYSFUNC(API_I2C, 4,void I2CMasterTransmitByte(byte Byte))
-SYSFUNC(API_I2C, 5,byte I2CMasterReceiveByte(void))
+SYSFUNC(API_I2C, 4,void I2CMasterTransmitByte(unsigned char Byte))
+SYSFUNC(API_I2C, 5,unsigned char I2CMasterReceiveByte(void))
 SYSFUNC(API_I2C, 6,void I2CMasterBeginWrite(int Address))
 SYSFUNC(API_I2C, 7,void I2CMasterBeginRead(int Address))
 SYSFUNC(API_I2C, 8,void I2CMasterSetAck(bool SetOn))
@@ -742,9 +740,9 @@ SYSFUNC(API_I2C, 8,void I2CMasterSetAck(bool SetOn))
 
 #endif
 
-SYSFUNC(API_MIFARECLASSIC, 0, bool MifareClassic_Login(const byte* Key, byte KeyType, int Sector))
-SYSFUNC(API_MIFARECLASSIC, 1, bool MifareClassic_ReadBlock(int Block, byte* Data))
-SYSFUNC(API_MIFARECLASSIC, 2, bool MifareClassic_WriteBlock(int Block, const byte* Data))
+SYSFUNC(API_MIFARECLASSIC, 0, bool MifareClassic_Login(const unsigned char* Key, unsigned char KeyType, int Sector))
+SYSFUNC(API_MIFARECLASSIC, 1, bool MifareClassic_ReadBlock(int Block, unsigned char* Data))
+SYSFUNC(API_MIFARECLASSIC, 2, bool MifareClassic_WriteBlock(int Block, const unsigned char* Data))
 SYSFUNC(API_MIFARECLASSIC, 3, bool MifareClassic_ReadValueBlock(int Block, int* Value))
 SYSFUNC(API_MIFARECLASSIC, 4, bool MifareClassic_WriteValueBlock(int Block, int Value))
 SYSFUNC(API_MIFARECLASSIC, 5, bool MifareClassic_IncrementValueBlock(int Block, int Value))
@@ -755,18 +753,18 @@ SYSFUNC(API_MIFARECLASSIC, 7, bool MifareClassic_CopyValueBlock(int SourceBlock,
 // ****** Mifare Ultralight Functions *******************************
 // ******************************************************************
 
-SYSFUNC(API_MIFAREULTRALIGHT, 0, bool MifareUltralight_ReadPage(int Page, byte* Data))
-SYSFUNC(API_MIFAREULTRALIGHT, 1, bool MifareUltralight_WritePage(int Page, const byte* Data))
-SYSFUNC(API_MIFAREULTRALIGHT, 2, bool MifareUltralightC_Authenticate(const byte* Key))
-SYSFUNC(API_MIFAREULTRALIGHT, 3, bool MifareUltralightC_SAMAuthenticate(int KeyNo, int KeyVersion, const byte* DIVInput, int DIVByteCnt))
-SYSFUNC(API_MIFAREULTRALIGHT, 4, bool MifareUltralightC_WriteKeyFromSAM(int KeyNo, int KeyVersion, const byte* DIVInput, int DIVByteCnt))
-SYSFUNC(API_MIFAREULTRALIGHT, 5, bool MifareUltralightEV1_FastRead(int StartPage, int NumberOfPages, byte* Data))
+SYSFUNC(API_MIFAREULTRALIGHT, 0, bool MifareUltralight_ReadPage(int Page, unsigned char* Data))
+SYSFUNC(API_MIFAREULTRALIGHT, 1, bool MifareUltralight_WritePage(int Page, const unsigned char* Data))
+SYSFUNC(API_MIFAREULTRALIGHT, 2, bool MifareUltralightC_Authenticate(const unsigned char* Key))
+SYSFUNC(API_MIFAREULTRALIGHT, 3, bool MifareUltralightC_SAMAuthenticate(int KeyNo, int KeyVersion, const unsigned char* DIVInput, int DIVByteCnt))
+SYSFUNC(API_MIFAREULTRALIGHT, 4, bool MifareUltralightC_WriteKeyFromSAM(int KeyNo, int KeyVersion, const unsigned char* DIVInput, int DIVByteCnt))
+SYSFUNC(API_MIFAREULTRALIGHT, 5, bool MifareUltralightEV1_FastRead(int StartPage, int NumberOfPages, unsigned char* Data))
 SYSFUNC(API_MIFAREULTRALIGHT, 6, bool MifareUltralightEV1_IncCounter(int CounterAddr, int IncrValue))
 SYSFUNC(API_MIFAREULTRALIGHT, 7, bool MifareUltralightEV1_ReadCounter(int CounterAddr, int* CounterValue))
-SYSFUNC(API_MIFAREULTRALIGHT, 8, bool MifareUltralightEV1_ReadSig(byte* ECCSig))
-SYSFUNC(API_MIFAREULTRALIGHT, 9, bool MifareUltralightEV1_GetVersion(byte* Version))
-SYSFUNC(API_MIFAREULTRALIGHT, 10, bool MifareUltralightEV1_PwdAuth(const byte* Password, const byte* PwdAck))
-SYSFUNC(API_MIFAREULTRALIGHT, 11, bool MifareUltralightEV1_CheckTearingEvent(int CounterAddr, byte* ValidFlag))
+SYSFUNC(API_MIFAREULTRALIGHT, 8, bool MifareUltralightEV1_ReadSig(unsigned char* ECCSig))
+SYSFUNC(API_MIFAREULTRALIGHT, 9, bool MifareUltralightEV1_GetVersion(unsigned char* Version))
+SYSFUNC(API_MIFAREULTRALIGHT, 10, bool MifareUltralightEV1_PwdAuth(const unsigned char* Password, const unsigned char* PwdAck))
+SYSFUNC(API_MIFAREULTRALIGHT, 11, bool MifareUltralightEV1_CheckTearingEvent(int CounterAddr, unsigned char* ValidFlag))
 
 // ******************************************************************
 // ****** ISO15693 Functions ****************************************
@@ -801,32 +799,33 @@ SYSFUNC(API_MIFAREULTRALIGHT, 11, bool MifareUltralightEV1_CheckTearingEvent(int
 #define ISO15693_TAGTYPE_UNKNOWNINFINEON	0x5F
 #define ISO15693_TAGTYPE_UNKNOWN			0xFF
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte DSFID_Present:1;
-	byte AFI_Present:1;
-	byte VICC_Memory_Size_Present:1;
-	byte IC_Reference_Present:1;
-	byte Res1:4;
-	byte UID[8];
-	byte DSFID;
-	byte AFI;
-	byte BlockSize;
+    unsigned char DSFID_Present:1;
+    unsigned char AFI_Present:1;
+    unsigned char VICC_Memory_Size_Present:1;
+    unsigned char IC_Reference_Present:1;
+    unsigned char Res1:4;
+    unsigned char UID[8];
+    unsigned char DSFID;
+    unsigned char AFI;
+    unsigned char BlockSize;
 	uint16_t Number_of_Blocks;
-	byte IC_Reference;
+    unsigned char IC_Reference;
 } TISO15693_SystemInfo;
+
 
 #endif
 
-SYSFUNC(API_ISO15693, 0, bool ISO15693_GenericCommand(byte Flags, byte Command, byte* Data, int* Length, int BufferSize))
+SYSFUNC(API_ISO15693, 0, bool ISO15693_GenericCommand(unsigned char Flags, unsigned char Command, unsigned char* Data, int* Length, int BufferSize))
 SYSFUNC(API_ISO15693, 1, bool ISO15693_GetSystemInformation(TISO15693_SystemInfo* SystemInfo))
 SYSFUNC(API_ISO15693, 2, bool ISO15693_GetSystemInformationExt(TISO15693_SystemInfo* SystemInfo))
-SYSFUNC(API_ISO15693, 3, int  ISO15693_GetTagTypeFromUID(byte* UID))
+SYSFUNC(API_ISO15693, 3, int  ISO15693_GetTagTypeFromUID(unsigned char* UID))
 SYSFUNC(API_ISO15693, 4, int  ISO15693_GetTagTypeFromSystemInfo(TISO15693_SystemInfo* SystemInfo))
-SYSFUNC(API_ISO15693, 5, bool ISO15693_ReadSingleBlock(int BlockNumber, byte* BlockData, int* Length, int BufferSize))
-SYSFUNC(API_ISO15693, 6, bool ISO15693_ReadSingleBlockExt(int BlockNumber, byte* BlockData, int* Length, int BufferSize))
-SYSFUNC(API_ISO15693, 7, bool ISO15693_WriteSingleBlock(int BlockNumber, const byte* BlockData, int Length))
-SYSFUNC(API_ISO15693, 8, bool ISO15693_WriteSingleBlockExt(int BlockNumber, const byte* BlockData, int Length))
+SYSFUNC(API_ISO15693, 5, bool ISO15693_ReadSingleBlock(int BlockNumber, unsigned char* BlockData, int* Length, int BufferSize))
+SYSFUNC(API_ISO15693, 6, bool ISO15693_ReadSingleBlockExt(int BlockNumber, unsigned char* BlockData, int* Length, int BufferSize))
+SYSFUNC(API_ISO15693, 7, bool ISO15693_WriteSingleBlock(int BlockNumber, const unsigned char* BlockData, int Length))
+SYSFUNC(API_ISO15693, 8, bool ISO15693_WriteSingleBlockExt(int BlockNumber, const unsigned char* BlockData, int Length))
 
 // ******************************************************************
 // ****** Crypto Functions ******************************************
@@ -854,11 +853,11 @@ SYSFUNC(API_ISO15693, 8, bool ISO15693_WriteSingleBlockExt(int BlockNumber, cons
 
 #endif
 
-SYSFUNC(API_CRYPTO, 0, void Crypto_Init(int CryptoEnv, int CryptoMode, const byte* Key, int KeyByteCnt))
-SYSFUNC(API_CRYPTO, 1, void Encrypt(int CryptoEnv, const byte* PlainBlock, byte* CipheredBlock, int BlockByteCnt))
-SYSFUNC(API_CRYPTO, 2, void Decrypt(int CryptoEnv, const byte* CipheredBlock, byte* PlainBlock, int BlockByteCnt))
+SYSFUNC(API_CRYPTO, 0, void Crypto_Init(int CryptoEnv, int CryptoMode, const unsigned char* Key, int KeyByteCnt))
+SYSFUNC(API_CRYPTO, 1, void Encrypt(int CryptoEnv, const unsigned char* PlainBlock, unsigned char* CipheredBlock, int BlockByteCnt))
+SYSFUNC(API_CRYPTO, 2, void Decrypt(int CryptoEnv, const unsigned char* CipheredBlock, unsigned char* PlainBlock, int BlockByteCnt))
 SYSFUNC(API_CRYPTO, 3, void CBC_ResetInitVector(int CryptoEnv))
-SYSFUNC(API_CRYPTO, 4, bool DecryptSecrets(const byte *CipheredData,byte *PlainData,int ByteCnt))
+SYSFUNC(API_CRYPTO, 4, bool DecryptSecrets(const unsigned char *CipheredData,unsigned char *PlainData,int ByteCnt))
 
 
 // ******************************************************************
@@ -888,24 +887,24 @@ SYSFUNC(API_CRYPTO, 4, bool DecryptSecrets(const byte *CipheredData,byte *PlainD
 #define DESF_KEYLEN_3K3DES                 	24
 #define DESF_KEYLEN_AES                    	16
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
 	struct TDESFireKeySettings
 	{
-		byte AllowChangeMasterKey:1;
-		byte FreeDirectoryList:1;
-		byte FreeCreateDelete:1;
-		byte ConfigurationChangeable:1;
-		byte ChangeKeyAccessRights:4;
+        unsigned char AllowChangeMasterKey:1;
+        unsigned char FreeDirectoryList:1;
+        unsigned char FreeCreateDelete:1;
+        unsigned char ConfigurationChangeable:1;
+        unsigned char ChangeKeyAccessRights:4;
 	} KeySettings;
 	int NumberOfKeys;
 	int KeyType;
 } TDESFireMasterKeySettings;
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte FileType;
-	byte CommSet;
+    unsigned char FileType;
+    unsigned char CommSet;
 	uint16_t AccessRights;
 	union TDESFireSpecificFileInfo
 	{
@@ -929,26 +928,26 @@ typedef struct __attribute__((__packed__))
 	}	SpecificFileInfo;
 } TDESFireFileSettings;
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte VendorID;
-	byte Type;
-	byte SubType;
-	byte VersionMajor;
-	byte VersionMinor;
+    unsigned char VendorID;
+    unsigned char Type;
+    unsigned char SubType;
+    unsigned char VersionMajor;
+    unsigned char VersionMinor;
 	uint32_t StorageSize;
-	byte CommunicationProtocol;
+    unsigned char CommunicationProtocol;
 } TDESFireTagInfo;
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte UID[7];
-	byte ProdBatchNumber[5];
-	byte CalendarWeekOfProduction;
-	byte YearOfProduction;
+    unsigned char UID[7];
+    unsigned char ProdBatchNumber[5];
+    unsigned char CalendarWeekOfProduction;
+    unsigned char YearOfProduction;
 } TDESFireProdInfo;
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
 	TDESFireTagInfo HWInfo;
 	TDESFireTagInfo SWInfo;
@@ -961,12 +960,12 @@ SYSFUNC(API_DESFIRE, 0, bool DESFire_GetApplicationIDs(int CryptoEnv, int* AIDs,
 SYSFUNC(API_DESFIRE, 1, bool DESFire_CreateApplication(int CryptoEnv, int AID, const TDESFireMasterKeySettings* MasterKeySettings))
 SYSFUNC(API_DESFIRE, 2, bool DESFire_DeleteApplication(int CryptoEnv, int AID))
 SYSFUNC(API_DESFIRE, 3, bool DESFire_SelectApplication(int CryptoEnv, int AID))
-SYSFUNC(API_DESFIRE, 4, bool DESFire_Authenticate(int CryptoEnv, int KeyNoTag, const byte* Key, int KeyByteCount, int KeyType, int Mode))
+SYSFUNC(API_DESFIRE, 4, bool DESFire_Authenticate(int CryptoEnv, int KeyNoTag, const unsigned char* Key, int KeyByteCount, int KeyType, int Mode))
 SYSFUNC(API_DESFIRE, 5, bool DESFire_GetKeySettings(int CryptoEnv, TDESFireMasterKeySettings* MasterKeySettings))
-SYSFUNC(API_DESFIRE, 6, bool DESFire_GetFileIDs(int CryptoEnv, byte* FileIDList, int* FileIDCount, int MaxFileIDCount))
+SYSFUNC(API_DESFIRE, 6, bool DESFire_GetFileIDs(int CryptoEnv, unsigned char* FileIDList, int* FileIDCount, int MaxFileIDCount))
 SYSFUNC(API_DESFIRE, 7, bool DESFire_GetFileSettings(int CryptoEnv, int FileNo, TDESFireFileSettings* FileSettings))
-SYSFUNC(API_DESFIRE, 8, bool DESFire_ReadData (int CryptoEnv, int FileNo, byte* Data, int Offset, int Length, int CommSet))
-SYSFUNC(API_DESFIRE, 9, bool DESFire_WriteData(int CryptoEnv, int FileNo, const byte* Data, int Offset, int Length, int CommSet))
+SYSFUNC(API_DESFIRE, 8, bool DESFire_ReadData (int CryptoEnv, int FileNo, unsigned char* Data, int Offset, int Length, int CommSet))
+SYSFUNC(API_DESFIRE, 9, bool DESFire_WriteData(int CryptoEnv, int FileNo, const unsigned char* Data, int Offset, int Length, int CommSet))
 SYSFUNC(API_DESFIRE,10, bool DESFire_GetValue(int CryptoEnv, int FileNo, int* Value, int CommSet))
 SYSFUNC(API_DESFIRE,11, bool DESFire_Credit(int CryptoEnv, int FileNo, const int Value, int CommSet))
 SYSFUNC(API_DESFIRE,12, bool DESFire_Debit(int CryptoEnv, int FileNo, const int Value, int CommSet))
@@ -979,18 +978,18 @@ SYSFUNC(API_DESFIRE,18, bool DESFire_GetVersion(int CryptoEnv, TDESFireVersion* 
 SYSFUNC(API_DESFIRE,19, bool DESFire_DeleteFile(int CryptoEnv, int FileNo))
 SYSFUNC(API_DESFIRE,20, bool DESFire_CommitTransaction(int CryptoEnv))
 SYSFUNC(API_DESFIRE,21, bool DESFire_AbortTransaction(int CryptoEnv))
-SYSFUNC(API_DESFIRE,22, bool DESFire_GetUID(int CryptoEnv, byte* UID, int* Length, int BufferSize))
-SYSFUNC(API_DESFIRE,23, bool DESFire_GetKeyVersion(int CryptoEnv, int KeyNo, byte* KeyVer))
+SYSFUNC(API_DESFIRE,22, bool DESFire_GetUID(int CryptoEnv, unsigned char* UID, int* Length, int BufferSize))
+SYSFUNC(API_DESFIRE,23, bool DESFire_GetKeyVersion(int CryptoEnv, int KeyNo, unsigned char* KeyVer))
 SYSFUNC(API_DESFIRE,24, bool DESFire_ChangeKeySettings(int CryptoEnv, const TDESFireMasterKeySettings* MasterKeySettings))
-SYSFUNC(API_DESFIRE,25, bool DESFire_ChangeKey(int CryptoEnv, int KeyNo, const byte* OldKey, int OldKeyByteCount, const byte* NewKey, int NewKeyByteCount, byte KeyVersion, const TDESFireMasterKeySettings* MasterKeySettings))
+SYSFUNC(API_DESFIRE,25, bool DESFire_ChangeKey(int CryptoEnv, int KeyNo, const unsigned char* OldKey, int OldKeyByteCount, const unsigned char* NewKey, int NewKeyByteCount, unsigned char KeyVersion, const TDESFireMasterKeySettings* MasterKeySettings))
 SYSFUNC(API_DESFIRE,26, bool DESFire_ChangeFileSettings(int CryptoEnv, int FileNo, int NewCommSet, int OldAccessRights, int NewAccessRights))
 SYSFUNC(API_DESFIRE,27, bool DESFire_DisableFormatTag(int CryptoEnv))
 SYSFUNC(API_DESFIRE,28, bool DESFire_EnableRandomID(int CryptoEnv))
-SYSFUNC(API_DESFIRE,29, bool DESFire_SetDefaultKey(int CryptoEnv, const byte* Key, int KeyByteCount, byte KeyVersion))
-SYSFUNC(API_DESFIRE,30, bool DESFire_SetATS(int CryptoEnv, const byte* ATS, int Length))
+SYSFUNC(API_DESFIRE,29, bool DESFire_SetDefaultKey(int CryptoEnv, const unsigned char* Key, int KeyByteCount, unsigned char KeyVersion))
+SYSFUNC(API_DESFIRE,30, bool DESFire_SetATS(int CryptoEnv, const unsigned char* ATS, int Length))
 SYSFUNC(API_DESFIRE,31, bool DESFire_CreateRecordFile(int CryptoEnv, int FileNo, const TDESFireFileSettings* FileSettings))
-SYSFUNC(API_DESFIRE,32, bool DESFire_ReadRecords(int CryptoEnv, int FileNo, byte* RecordData, int* RecDataByteCnt, int Offset, int NumberOfRecords, int RecordSize, int CommSet))
-SYSFUNC(API_DESFIRE,33, bool DESFire_WriteRecord(int CryptoEnv, int FileNo, const byte* Data, int Offset, int Length, int CommSet))
+SYSFUNC(API_DESFIRE,32, bool DESFire_ReadRecords(int CryptoEnv, int FileNo, unsigned char* RecordData, int* RecDataByteCnt, int Offset, int NumberOfRecords, int RecordSize, int CommSet))
+SYSFUNC(API_DESFIRE,33, bool DESFire_WriteRecord(int CryptoEnv, int FileNo, const unsigned char* Data, int Offset, int Length, int CommSet))
 SYSFUNC(API_DESFIRE,34, bool DESFire_ClearRecordFile(int CryptoEnv, int FileNo))
 
 // ******************************************************************
@@ -1035,45 +1034,45 @@ SYSFUNC(API_DESFIRE,34, bool DESFire_ClearRecordFile(int CryptoEnv, int FileNo))
 #define ISO7816_FREQUENCY_1000000		0
 #define ISO7816_FREQUENCY_DEFAULT		ISO7816_FREQUENCY_5000000
 
-typedef	struct __attribute__((__packed__))
+typedef	struct PACK
 {
-	byte bmICCStatus:2;
-	byte bmRFU:4;
-	byte bmCommandStatus:2;
+    unsigned char bmICCStatus:2;
+    unsigned char bmRFU:4;
+    unsigned char bmCommandStatus:2;
 } TISO7816StatusReg; // Size = 1
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
 	TISO7816StatusReg bStatus;
-	byte bError;
-	byte bClockStatus;
+    unsigned char bError;
+    unsigned char bClockStatus;
 } TISO7816SlotStatus; // Size = 3
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte bmFindexDindex;
-	byte bmTCCKS;
-	byte bGuardTime;
-	byte bWaitingInteger;
-	byte bClockStop;
+    unsigned char bmFindexDindex;
+    unsigned char bmTCCKS;
+    unsigned char bGuardTime;
+    unsigned char bWaitingInteger;
+    unsigned char bClockStop;
 } TProtocolDataT0; // Size = 5
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte bmFindexDindex;
-	byte bmTCCKS;
-	byte bGuardTime;
-	byte bmWaitingIntegers;
-	byte bClockStop;
-	byte bIFSC;
-	byte bNadValue;
-	byte bWTX;
+    unsigned char bmFindexDindex;
+    unsigned char bmTCCKS;
+    unsigned char bGuardTime;
+    unsigned char bmWaitingIntegers;
+    unsigned char bClockStop;
+    unsigned char bIFSC;
+    unsigned char bNadValue;
+    unsigned char bWTX;
 } TProtocolDataT1; // Size = 8
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte Protocol;
-	byte Freq;
+    unsigned char Protocol;
+    unsigned char Freq;
 	uint16_t F;
 	uint16_t D;
 	union TProtocolData
@@ -1083,61 +1082,61 @@ typedef struct __attribute__((__packed__))
 	} ProtocolData;
 } TISO7816CommSettings; // Size = 14
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte CLA;
-	byte INS;
-	byte P1;
-	byte P2;
+    unsigned char CLA;
+    unsigned char INS;
+    unsigned char P1;
+    unsigned char P2;
 	uint16_t Lc;
 	uint16_t Le;
 	struct TISO7816_ProtocolHeaderFlags
 	{
-		byte LePresent:1;
-		byte ExtendedAPDU:1;
-		byte RFU:6;
+        unsigned char LePresent:1;
+        unsigned char ExtendedAPDU:1;
+        unsigned char RFU:6;
 	} Flags;
 } TISO7816_ProtocolHeader; // Size = 9
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte CLA;
-	byte INS;
-	byte P1;
-	byte P2;
-	byte P3;
+    unsigned char CLA;
+    unsigned char INS;
+    unsigned char P1;
+    unsigned char P2;
+    unsigned char P3;
 } TISO7816_T0_Header; // Size = 5
 
 #endif
 
 SYSFUNC(API_ISO7816, 0, bool ISO7816_GetSlotStatus(int Channel, TISO7816SlotStatus* SlotStatus))
-SYSFUNC(API_ISO7816, 1, bool ISO7816_IccPowerOn(int Channel, byte* ATR, int* ATRByteCnt, int MaxATRByteCnt, byte bPowerSelect, TISO7816StatusReg* bStatus, byte* bError))
+SYSFUNC(API_ISO7816, 1, bool ISO7816_IccPowerOn(int Channel, unsigned char* ATR, int* ATRByteCnt, int MaxATRByteCnt, unsigned char bPowerSelect, TISO7816StatusReg* bStatus, unsigned char* bError))
 SYSFUNC(API_ISO7816, 2, bool ISO7816_IccPowerOff(int Channel, TISO7816SlotStatus* SlotStatus))
 SYSFUNC(API_ISO7816, 3, bool ISO7816_SetCommSettings(int Channel, const TISO7816CommSettings* CommSettings))
-SYSFUNC(API_ISO7816, 4, bool ISO7816_Transceive(int Channel,const byte* TX, int LenTX, byte* RX, int* LenRX, int MaxRXByteCnt, TISO7816StatusReg* bStatus, byte* bError))
-SYSFUNC(API_ISO7816, 5, bool ISO7816_ExchangeAPDU(int Channel, const TISO7816_ProtocolHeader* Header, const byte* TXData, int TXByteCnt, byte* RXData, int* RXByteCnt, int MaxRXByteCnt, uint16_t* StatusWord))
-SYSFUNC(API_ISO7816, 6, bool ISO7816_T0_TPDU(int Channel, const TISO7816_T0_Header* Header, const byte* TXData, int TXByteCnt, byte* RXData, int* RXByteCnt, int MaxRXByteCnt, uint16_t* StatusWord))
+SYSFUNC(API_ISO7816, 4, bool ISO7816_Transceive(int Channel,const unsigned char* TX, int LenTX, unsigned char* RX, int* LenRX, int MaxRXByteCnt, TISO7816StatusReg* bStatus, unsigned char* bError))
+SYSFUNC(API_ISO7816, 5, bool ISO7816_ExchangeAPDU(int Channel, const TISO7816_ProtocolHeader* Header, const unsigned char* TXData, int TXByteCnt, unsigned char* RXData, int* RXByteCnt, int MaxRXByteCnt, uint16_t* StatusWord))
+SYSFUNC(API_ISO7816, 6, bool ISO7816_T0_TPDU(int Channel, const TISO7816_T0_Header* Header, const unsigned char* TXData, int TXByteCnt, unsigned char* RXData, int* RXByteCnt, int MaxRXByteCnt, uint16_t* StatusWord))
 
 // ******************************************************************
 // ****** ICLASS SIO Functions **************************************
 // ******************************************************************
 
-SYSFUNC(API_ICLASS, 0, bool ICLASS_GetPACBits(byte* PACBits, int* PACBitCnt, int MaxPACBytes))
+SYSFUNC(API_ICLASS, 0, bool ICLASS_GetPACBits(unsigned char* PACBits, int* PACBitCnt, int MaxPACBytes))
 
 // ******************************************************************
 // ****** ISO14443 Transparent Transponder Access Functions *********
 // ******************************************************************
 
-SYSFUNC(API_ISO14443, 0, bool ISO14443A_GetATS(byte* ATS, int* ATSByteCnt, int MaxATSByteCnt))
-SYSFUNC(API_ISO14443, 1, bool ISO14443B_GetATQB(byte* ATQB, int* ATQBByteCnt, int MaxATQBByteCnt))
+SYSFUNC(API_ISO14443, 0, bool ISO14443A_GetATS(unsigned char* ATS, int* ATSByteCnt, int MaxATSByteCnt))
+SYSFUNC(API_ISO14443, 1, bool ISO14443B_GetATQB(unsigned char* ATQB, int* ATQBByteCnt, int MaxATQBByteCnt))
 SYSFUNC(API_ISO14443, 2, bool ISO14443_4_CheckPresence(void))
-SYSFUNC(API_ISO14443, 3, bool ISO14443_4_TDX(byte* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt))
-SYSFUNC(API_ISO14443, 4, bool ISO14443A_GetATQA(byte* ATQA))
-SYSFUNC(API_ISO14443, 5, bool ISO14443A_GetSAK(byte* SAK))
-SYSFUNC(API_ISO14443, 6, bool ISO14443B_GetAnswerToATTRIB(byte* AnswerToATTRIB, int* AnswerToATTRIBByteCnt, int MaxAnswerToATTRIBByteCnt))
-SYSFUNC(API_ISO14443, 7, bool ISO14443_3_TDX(byte* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt, int Timeout))
-SYSFUNC(API_ISO14443, 8, bool ISO14443A_SearchMultiTag(int* UIDCnt, int* UIDListByteCnt, byte *UIDList, int MaxUIDListByteCnt))
-SYSFUNC(API_ISO14443, 9, bool ISO14443A_SelectTag(const byte* UID, int UIDByteCnt))
+SYSFUNC(API_ISO14443, 3, bool ISO14443_4_TDX(unsigned char* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt))
+SYSFUNC(API_ISO14443, 4, bool ISO14443A_GetATQA(unsigned char* ATQA))
+SYSFUNC(API_ISO14443, 5, bool ISO14443A_GetSAK(unsigned char* SAK))
+SYSFUNC(API_ISO14443, 6, bool ISO14443B_GetAnswerToATTRIB(unsigned char* AnswerToATTRIB, int* AnswerToATTRIBByteCnt, int MaxAnswerToATTRIBByteCnt))
+SYSFUNC(API_ISO14443, 7, bool ISO14443_3_TDX(unsigned char* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt, int Timeout))
+SYSFUNC(API_ISO14443, 8, bool ISO14443A_SearchMultiTag(int* UIDCnt, int* UIDListByteCnt, unsigned char *UIDList, int MaxUIDListByteCnt))
+SYSFUNC(API_ISO14443, 9, bool ISO14443A_SelectTag(const unsigned char* UID, int UIDByteCnt))
 
 // ******************************************************************
 // ****** LF Functions **********************************************
@@ -1161,7 +1160,7 @@ SYSFUNC(API_ISO14443, 9, bool ISO14443A_SelectTag(const byte* UID, int UIDByteCn
 
 #endif
 
-SYSFUNC(API_LF,0,bool LFSequencer(const byte *Sequence,int SequenceByteCnt,byte *ReadBytes,int *ReadByteCnt,int MaxReadByteCnt))
+SYSFUNC(API_LF,0,bool LFSequencer(const unsigned char *Sequence,int SequenceByteCnt,unsigned char *ReadBytes,int *ReadByteCnt,int MaxReadByteCnt))
 
 // ******************************************************************
 // ****** HF Functions **********************************************
@@ -1179,12 +1178,12 @@ SYSFUNC(API_LF,0,bool LFSequencer(const byte *Sequence,int SequenceByteCnt,byte 
 #endif
 
 SYSFUNC(API_AT55,0,void AT55_Begin(void))
-SYSFUNC(API_AT55,1,bool AT55_ReadBlock(int Address,byte *Data))
-SYSFUNC(API_AT55,2,bool AT55_ReadBlockProtected(int Address,byte *Data,const byte *Password))
-SYSFUNC(API_AT55,3,bool AT55_WriteBlock(int Address,const byte *Data))
-SYSFUNC(API_AT55,4,bool AT55_WriteBlockProtected(int Address,const byte *Data,const byte *Password))
-SYSFUNC(API_AT55,5,bool AT55_WriteBlockAndLock(int Address,const byte *Data))
-SYSFUNC(API_AT55,6,bool AT55_WriteBlockProtectedAndLock(int Address,const byte *Data,const byte *Password))
+SYSFUNC(API_AT55,1,bool AT55_ReadBlock(int Address,unsigned char *Data))
+SYSFUNC(API_AT55,2,bool AT55_ReadBlockProtected(int Address,unsigned char *Data,const unsigned char *Password))
+SYSFUNC(API_AT55,3,bool AT55_WriteBlock(int Address,const unsigned char *Data))
+SYSFUNC(API_AT55,4,bool AT55_WriteBlockProtected(int Address,const unsigned char *Data,const unsigned char *Password))
+SYSFUNC(API_AT55,5,bool AT55_WriteBlockAndLock(int Address,const unsigned char *Data))
+SYSFUNC(API_AT55,6,bool AT55_WriteBlockProtectedAndLock(int Address,const unsigned char *Data,const unsigned char *Password))
 
 // ******************************************************************
 // ****** NFC-P2P: NFCIP Functions **********************************
@@ -1199,11 +1198,11 @@ SYSFUNC(API_AT55,6,bool AT55_WriteBlockProtectedAndLock(int Address,const byte *
 
 #endif
 
-SYSFUNC(API_NFCIP, 0, bool NFCIP_Init(const byte* GeneralBytes, int GeneralBytesCnt))
+SYSFUNC(API_NFCIP, 0, bool NFCIP_Init(const unsigned char* GeneralBytes, int GeneralBytesCnt))
 SYSFUNC(API_NFCIP, 1, int  NFCIP_DEP_GetConnectionState(void))
 SYSFUNC(API_NFCIP, 2, int  NFCIP_DEP_TestIPDU(int Direction))
-SYSFUNC(API_NFCIP, 3, bool NFCIP_DEP_SendIPDU(const byte* IPDU, int IPDUByteCnt))
-SYSFUNC(API_NFCIP, 4, bool NFCIP_DEP_ReceiveIPDU(byte* IPDU, int* IPDUByteCnt, int MaxIPDUByteCnt))
+SYSFUNC(API_NFCIP, 3, bool NFCIP_DEP_SendIPDU(const unsigned char* IPDU, int IPDUByteCnt))
+SYSFUNC(API_NFCIP, 4, bool NFCIP_DEP_ReceiveIPDU(unsigned char* IPDU, int* IPDUByteCnt, int MaxIPDUByteCnt))
 
 // ******************************************************************
 // ****** NFC-P2P: LLCP Functions ***********************************
@@ -1219,11 +1218,11 @@ SYSFUNC(API_NFCIP, 4, bool NFCIP_DEP_ReceiveIPDU(byte* IPDU, int* IPDUByteCnt, i
 
 #endif
 
-SYSFUNC(API_NFCLLCP, 0, bool LLCP_Init(int ServiceEndPoint, byte LocalSAP, byte RemoteSAP, const char* ServiceNameURI, int ServiceNameByteCnt))
+SYSFUNC(API_NFCLLCP, 0, bool LLCP_Init(int ServiceEndPoint, unsigned char LocalSAP, unsigned char RemoteSAP, const char* ServiceNameURI, int ServiceNameByteCnt))
 SYSFUNC(API_NFCLLCP, 1, int  LLCP_GetConnectionState(int ServiceEndPoint))
 SYSFUNC(API_NFCLLCP, 2, int  LLCP_TestIPDU(int ServiceEndPoint, int Direction))
-SYSFUNC(API_NFCLLCP, 3, bool LLCP_SendIPDU(int ServiceEndPoint, const byte* IPDU, int IPDUByteCnt))
-SYSFUNC(API_NFCLLCP, 4, bool LLCP_ReceiveIPDU(int ServiceEndPoint, byte* IPDU, int* IPDUByteCnt, int MaxIPDUByteCnt))
+SYSFUNC(API_NFCLLCP, 3, bool LLCP_SendIPDU(int ServiceEndPoint, const unsigned char* IPDU, int IPDUByteCnt))
+SYSFUNC(API_NFCLLCP, 4, bool LLCP_ReceiveIPDU(int ServiceEndPoint, unsigned char* IPDU, int* IPDUByteCnt, int MaxIPDUByteCnt))
 SYSFUNC(API_NFCLLCP, 5, int  LLCP_Listen(int ServiceEndPoint))
 SYSFUNC(API_NFCLLCP, 6, int  LLCP_Connect(int ServiceEndPoint))
 SYSFUNC(API_NFCLLCP, 7, int  LLCP_Accept(int ServiceEndPoint))
@@ -1248,9 +1247,9 @@ SYSFUNC(API_NFCSNEP, 0, bool SNEP_Init(void))
 SYSFUNC(API_NFCSNEP, 1, int  SNEP_GetConnectionState(void))
 SYSFUNC(API_NFCSNEP, 2, int  SNEP_GetFragmentByteCount(int Direction))
 SYSFUNC(API_NFCSNEP, 3, bool SNEP_BeginMessage(uint32_t MsgByteCnt))
-SYSFUNC(API_NFCSNEP, 4, bool SNEP_SendMessageFragment(const byte* MsgFrag, int FragByteCnt))
+SYSFUNC(API_NFCSNEP, 4, bool SNEP_SendMessageFragment(const unsigned char* MsgFrag, int FragByteCnt))
 SYSFUNC(API_NFCSNEP, 5, bool SNEP_TestMessage(uint32_t* MsgByteCnt))
-SYSFUNC(API_NFCSNEP, 6, bool SNEP_ReceiveMessageFragment(byte* MsgFrag, int FragByteCnt))
+SYSFUNC(API_NFCSNEP, 6, bool SNEP_ReceiveMessageFragment(unsigned char* MsgFrag, int FragByteCnt))
 SYSFUNC(API_NFCSNEP, 7, bool SNEP_RequestMessage(uint32_t MsgByteCnt, uint32_t AcceptableLength))
 
 // ******************************************************************
@@ -1266,10 +1265,10 @@ SYSFUNC(API_NFCSNEP, 7, bool SNEP_RequestMessage(uint32_t MsgByteCnt, uint32_t A
 
 #endif
 
-SYSFUNC(API_EM4150,0,bool EM4150_Login(const byte *Password))
-SYSFUNC(API_EM4150,1,bool EM4150_ReadWord(int Address,byte *Word))
-SYSFUNC(API_EM4150,2,bool EM4150_WriteWord(int Address,const byte *Word))
-SYSFUNC(API_EM4150,3,bool EM4150_WritePassword(const byte *ActualPassword,const byte *NewPassword))
+SYSFUNC(API_EM4150,0,bool EM4150_Login(const unsigned char *Password))
+SYSFUNC(API_EM4150,1,bool EM4150_ReadWord(int Address,unsigned char *Word))
+SYSFUNC(API_EM4150,2,bool EM4150_WriteWord(int Address,const unsigned char *Word))
+SYSFUNC(API_EM4150,3,bool EM4150_WritePassword(const unsigned char *ActualPassword,const unsigned char *NewPassword))
 SYSFUNC(API_EM4150,4,int  EM4150_GetTagInfo(void))
 
 // ******************************************************************
@@ -1300,15 +1299,15 @@ SYSFUNC(API_EM4150,4,int  EM4150_GetTagInfo(void))
 #define	FS_POSREL				1
 #define	FS_POSEND				2
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
 	uint32_t ID;
 	uint32_t Length;
 } TFileInfo; // Size = 8
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte ID;
+    unsigned char ID;
 	uint32_t Size;
 	uint32_t Free;
 } TStorageInfo; // Size = 13
@@ -1338,11 +1337,11 @@ SYSFUNC(API_FILESYS,13,bool FSGetStorageInfo(int StorageID,TStorageInfo *pStorag
 
 #endif
 
-SYSFUNC(API_MIFAREPLUS, 0, bool MFP_WritePerso(int BlockNr, const byte* Data))
+SYSFUNC(API_MIFAREPLUS, 0, bool MFP_WritePerso(int BlockNr, const unsigned char* Data))
 SYSFUNC(API_MIFAREPLUS, 1, bool MFP_CommitPerso(void))
-SYSFUNC(API_MIFAREPLUS, 2, bool MFP_Authenticate(int CryptoEnv, int KeyBNr, const byte* Key))
-SYSFUNC(API_MIFAREPLUS, 3, bool MFP_ReadBlock(int CryptoEnv, int Block, byte* Data))
-SYSFUNC(API_MIFAREPLUS, 4, bool MFP_WriteBlock(int CryptoEnv, int Block, const byte* Data))
+SYSFUNC(API_MIFAREPLUS, 2, bool MFP_Authenticate(int CryptoEnv, int KeyBNr, const unsigned char* Key))
+SYSFUNC(API_MIFAREPLUS, 3, bool MFP_ReadBlock(int CryptoEnv, int Block, unsigned char* Data))
+SYSFUNC(API_MIFAREPLUS, 4, bool MFP_WriteBlock(int CryptoEnv, int Block, const unsigned char* Data))
 SYSFUNC(API_MIFAREPLUS, 5, bool MFP_ReadValueBlock(int CryptoEnv, int Block, int* Value))
 SYSFUNC(API_MIFAREPLUS, 6, bool MFP_WriteValueBlock(int CryptoEnv, int Block, int Value))
 SYSFUNC(API_MIFAREPLUS, 7, bool MFP_IncrementValueBlock(int CryptoEnv, int Block, int Value))
@@ -1371,11 +1370,11 @@ SYSFUNC(API_ADC, 1,int ADCGetConversionValue(int ADCChannel))
 
 #endif
 
-SYSFUNC(API_FELICA, 0, bool FeliCa_TDX(byte* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt, byte MaximumResponseTime, byte NumberOfBlocks))
-SYSFUNC(API_FELICA, 1, bool FeliCa_ReadWithoutEncryption(int NumberOfServices, const uint16_t* ServiceCodeList, int NumberOfBlocks, const uint16_t* BlockList, byte* Data))
-SYSFUNC(API_FELICA, 2, bool FeliCa_WriteWithoutEncryption(int NumberOfServices, const uint16_t* ServiceCodeList, int NumberOfBlocks, const uint16_t* BlockList, const byte* Data))
+SYSFUNC(API_FELICA, 0, bool FeliCa_TDX(unsigned char* TXRX, int TXByteCnt, int* RXByteCnt, int MaxRXByteCnt, unsigned char MaximumResponseTime, unsigned char NumberOfBlocks))
+SYSFUNC(API_FELICA, 1, bool FeliCa_ReadWithoutEncryption(int NumberOfServices, const uint16_t* ServiceCodeList, int NumberOfBlocks, const uint16_t* BlockList, unsigned char* Data))
+SYSFUNC(API_FELICA, 2, bool FeliCa_WriteWithoutEncryption(int NumberOfServices, const uint16_t* ServiceCodeList, int NumberOfBlocks, const uint16_t* BlockList, const unsigned char* Data))
 SYSFUNC(API_FELICA, 3, bool FeliCa_RequestSystemCode(int* NumberOfSystemCodes, uint16_t* SystemCodeList, int MaxNumberOfSystemCodes))
-SYSFUNC(API_FELICA, 4, bool FeliCa_Poll(uint16_t SystemCode, byte* IDm, byte* PMm))
+SYSFUNC(API_FELICA, 4, bool FeliCa_Poll(uint16_t SystemCode, unsigned char* IDm, unsigned char* PMm))
 SYSFUNC(API_FELICA, 5, bool FeliCa_RequestService(int NumberOfServices, const uint16_t* ServiceCodeList, uint16_t* KeyVersionList))
 
 // ******************************************************************
@@ -1386,14 +1385,14 @@ SYSFUNC(API_FELICA, 5, bool FeliCa_RequestService(int NumberOfServices, const ui
 
 #endif
 
-SYSFUNC(API_SLE44XX, 0, bool SLE_GetATR(int Channel, byte* ATR))
-SYSFUNC(API_SLE44XX, 1, bool SLE_ReadMainMemory(int Channel, int Address, byte* Data, int ByteCnt))
-SYSFUNC(API_SLE44XX, 2, bool SLE_UpdateMainMemory(int Channel, int Address, byte Value))
-SYSFUNC(API_SLE44XX, 3, bool SLE_ReadSecurityMemory(int Channel, byte* SecMemData))
-SYSFUNC(API_SLE44XX, 4, bool SLE_UpdateSecurityMemory(int Channel, int Address, byte SecMemData))
-SYSFUNC(API_SLE44XX, 5, bool SLE_ReadProtectionMemory(int Channel, byte* ProtMemData))
-SYSFUNC(API_SLE44XX, 6, bool SLE_WriteProtectionMemory(int Channel, int Address, byte ProtMemData))
-SYSFUNC(API_SLE44XX, 7, bool SLE_CompareVerificationData(int Channel, int Address, byte VerificationData))
+SYSFUNC(API_SLE44XX, 0, bool SLE_GetATR(int Channel, unsigned char* ATR))
+SYSFUNC(API_SLE44XX, 1, bool SLE_ReadMainMemory(int Channel, int Address, unsigned char* Data, int ByteCnt))
+SYSFUNC(API_SLE44XX, 2, bool SLE_UpdateMainMemory(int Channel, int Address, unsigned char Value))
+SYSFUNC(API_SLE44XX, 3, bool SLE_ReadSecurityMemory(int Channel, unsigned char* SecMemData))
+SYSFUNC(API_SLE44XX, 4, bool SLE_UpdateSecurityMemory(int Channel, int Address, unsigned char SecMemData))
+SYSFUNC(API_SLE44XX, 5, bool SLE_ReadProtectionMemory(int Channel, unsigned char* ProtMemData))
+SYSFUNC(API_SLE44XX, 6, bool SLE_WriteProtectionMemory(int Channel, int Address, unsigned char ProtMemData))
+SYSFUNC(API_SLE44XX, 7, bool SLE_CompareVerificationData(int Channel, int Address, unsigned char VerificationData))
 
 // ******************************************************************
 // ****** NTAG2XX ***************************************************
@@ -1403,13 +1402,13 @@ SYSFUNC(API_SLE44XX, 7, bool SLE_CompareVerificationData(int Channel, int Addres
 
 #endif
 
-SYSFUNC(API_NTAG, 0, bool NTAG_Read(int Page, byte* Data))
-SYSFUNC(API_NTAG, 1, bool NTAG_Write(int Page, const byte* Data))
-SYSFUNC(API_NTAG, 2, bool NTAG_FastRead(int StartPage, int NumberOfPages, byte* Data))
+SYSFUNC(API_NTAG, 0, bool NTAG_Read(int Page, unsigned char* Data))
+SYSFUNC(API_NTAG, 1, bool NTAG_Write(int Page, const unsigned char* Data))
+SYSFUNC(API_NTAG, 2, bool NTAG_FastRead(int StartPage, int NumberOfPages, unsigned char* Data))
 SYSFUNC(API_NTAG, 3, bool NTAG_ReadCounter(int* CounterValue))
-SYSFUNC(API_NTAG, 4, bool NTAG_ReadSig(byte* ECCSig))
-SYSFUNC(API_NTAG, 5, bool NTAG_GetVersion(byte* Version))
-SYSFUNC(API_NTAG, 6, bool NTAG_PwdAuth(const byte* Password, const byte* PwdAck))
+SYSFUNC(API_NTAG, 4, bool NTAG_ReadSig(unsigned char* ECCSig))
+SYSFUNC(API_NTAG, 5, bool NTAG_GetVersion(unsigned char* Version))
+SYSFUNC(API_NTAG, 6, bool NTAG_PwdAuth(const unsigned char* Password, const unsigned char* PwdAck))
 SYSFUNC(API_NTAG, 7, bool NTAG_SectorSelect(int Sector))
 
 // ******************************************************************
@@ -1420,8 +1419,8 @@ SYSFUNC(API_NTAG, 7, bool NTAG_SectorSelect(int Sector))
 
 #endif
 
-SYSFUNC(API_SRX, 0, bool SRX_ReadBlock(int Block, byte* Data))
-SYSFUNC(API_SRX, 1, bool SRX_WriteBlock(int Block, const byte* Data))
+SYSFUNC(API_SRX, 0, bool SRX_ReadBlock(int Block, unsigned char* Data))
+SYSFUNC(API_SRX, 1, bool SRX_WriteBlock(int Block, const unsigned char* Data))
 
 // ******************************************************************
 // ****** SAMAVX ****************************************************
@@ -1429,22 +1428,22 @@ SYSFUNC(API_SRX, 1, bool SRX_WriteBlock(int Block, const byte* Data))
 
 #ifndef __TWN4_SYS_C__
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-	byte VersionKeyA;
-	byte VersionKeyB;
-	byte VersionKeyC;
+    unsigned char VersionKeyA;
+    unsigned char VersionKeyB;
+    unsigned char VersionKeyC;
 	uint32_t DF_AID;
-	byte DF_KeyNo;
-	byte KeyNoCEK;
-	byte KeyVCEK;
-	byte RefNoKUC;
+    unsigned char DF_KeyNo;
+    unsigned char KeyNoCEK;
+    unsigned char KeyVCEK;
+    unsigned char RefNoKUC;
 	uint16_t SET;
 } TSAMAVxKeyEntryData; // Size = 13
 
 #endif
 
-SYSFUNC(API_SAMAVX, 0, bool SAMAVx_AuthenticateHost(int CryptoEnv, int KeyNo, const byte* Key, int KeyByteCount, int KeyType))
+SYSFUNC(API_SAMAVX, 0, bool SAMAVx_AuthenticateHost(int CryptoEnv, int KeyNo, const unsigned char* Key, int KeyByteCount, int KeyType))
 SYSFUNC(API_SAMAVX, 1, bool SAMAVx_GetKeyEntry(int KeyNo, TSAMAVxKeyEntryData* KeyEntryData))
 
 // ******************************************************************
@@ -1488,13 +1487,13 @@ SYSFUNC(API_EM4102, 0,int EM4102_GetTagInfo(void))
 #define SPI_FIRSTBIT_MSB            0
 #define SPI_FIRSTBIT_LSB            1
 
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
-    byte Mode;
-    byte CPOL;
-    byte CPHA;
-    byte ClockRate;
-    byte BitOrder;
+    unsigned char Mode;
+    unsigned char CPOL;
+    unsigned char CPHA;
+    unsigned char ClockRate;
+    unsigned char BitOrder;
 } TSPIParameters;
 
 #endif
@@ -1503,9 +1502,9 @@ SYSFUNC(API_SPI, 0, bool SPIInit(const TSPIParameters *SPIParameters))
 SYSFUNC(API_SPI, 1, void SPIDeInit(void))
 SYSFUNC(API_SPI, 2, void SPIMasterBeginTransfer(void))
 SYSFUNC(API_SPI, 3, void SPIMasterEndTransfer(void))
-SYSFUNC(API_SPI, 4, bool SPITransmit(const byte *TXData,int ByteCount))
-SYSFUNC(API_SPI, 5, bool SPIReceive(byte *RXData,int ByteCount))
-SYSFUNC(API_SPI, 6, bool SPITransceive(const byte *TXData,byte *RXData,int ByteCount))
+SYSFUNC(API_SPI, 4, bool SPITransmit(const unsigned char *TXData,int ByteCount))
+SYSFUNC(API_SPI, 5, bool SPIReceive(unsigned char *RXData,int ByteCount))
+SYSFUNC(API_SPI, 6, bool SPITransceive(const unsigned char *TXData,unsigned char *RXData,int ByteCount))
 
 // ******************************************************************
 // ****** BLE Functions *********************************************
@@ -1534,31 +1533,31 @@ SYSFUNC(API_SPI, 6, bool SPITransceive(const byte *TXData,byte *RXData,int ByteC
 #define BLE_EVENT_SYSTEM_BOOT 					0xA2
 
 // BLE configuration structure
-typedef struct __attribute__((__packed__))
+typedef struct PACK
 {
 	uint32_t ConnectTimeout;
-	byte Power;
-	byte BondableMode;
+    unsigned char Power;
+    unsigned char BondableMode;
 	uint16_t AdvInterval;
-	byte ChannelMap;
-	byte DiscoverMode;
-	byte ConnectMode;
-	byte SecurityFlags;
-	byte IOCapabilities;
+    unsigned char ChannelMap;
+    unsigned char DiscoverMode;
+    unsigned char ConnectMode;
+    unsigned char SecurityFlags;
+    unsigned char IOCapabilities;
 	uint32_t Passkey;
 } TBLEConfig;
 
 #endif
 
 SYSFUNC(API_BLE, 0, bool BLEPresetConfig(TBLEConfig* BLEConfig))
-SYSFUNC(API_BLE, 1, bool BLEPresetUserData(byte ScanResp, const byte* UserData, int UserDataLength))
+SYSFUNC(API_BLE, 1, bool BLEPresetUserData(unsigned char ScanResp, const unsigned char* UserData, int UserDataLength))
 SYSFUNC(API_BLE, 2, bool BLEInit(int Mode))
 SYSFUNC(API_BLE, 3, int  BLECheckEvent(void))
-SYSFUNC(API_BLE, 4, bool BLEGetAddress(byte* DeviceAddress, byte* RemoteAddress, byte* Type))
-SYSFUNC(API_BLE, 5, bool BLEGetVersion(byte* HWVersion, byte* BootString))
-SYSFUNC(API_BLE, 6, bool BLEGetEnvironment(byte* DeviceRole, byte* SecurityMode, byte* Rssi))
-SYSFUNC(API_BLE, 7, bool BLEGetGattServerAttributeValue(int AttrHandle, byte *Data, int *Len, int MaxLen))
-SYSFUNC(API_BLE, 8, bool BLESetGattServerAttributeValue(int AttrHandle, int Offset, const byte *Data, int Len))
+SYSFUNC(API_BLE, 4, bool BLEGetAddress(unsigned char* DeviceAddress, unsigned char* RemoteAddress, unsigned char* Type))
+SYSFUNC(API_BLE, 5, bool BLEGetVersion(unsigned char* HWVersion, unsigned char* BootString))
+SYSFUNC(API_BLE, 6, bool BLEGetEnvironment(unsigned char* DeviceRole, unsigned char* SecurityMode, unsigned char* Rssi))
+SYSFUNC(API_BLE, 7, bool BLEGetGattServerAttributeValue(int AttrHandle, unsigned char *Data, int *Len, int MaxLen))
+SYSFUNC(API_BLE, 8, bool BLESetGattServerAttributeValue(int AttrHandle, int Offset, const unsigned char *Data, int Len))
 SYSFUNC(API_BLE, 9, bool BLERequestRssi(void))
 SYSFUNC(API_BLE, 10,bool BLERequestEndpointClose(void))
 
@@ -1566,6 +1565,13 @@ SYSFUNC(API_BLE, 10,bool BLERequestEndpointClose(void))
 // ******* End of System Functions **********************************
 // ******************************************************************
 
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+#undef PACK
 
 #endif

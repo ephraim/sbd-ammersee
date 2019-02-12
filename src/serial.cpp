@@ -1,8 +1,17 @@
-#include <fcntl.h>
 #include <iomanip>
 #include <iostream>
+
+#ifdef __GNUC__
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#elif _MSC_VER
+#include <io.h>
+#include <fcntl.h>
+#include <sys\types.h>
+#include <sys\stat.h>
+#include <share.h>
+#endif
 
 #include "serial.h"
 #include "misc.h"
@@ -32,9 +41,9 @@ bool operator ==(const struct termios &a, const struct termios &b)
 }
 #endif
 
-#ifndef _WIN32
+#ifdef __GNUC__
 Serial::Serial(string port, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
-#else
+#elif _MSC_VER
 Serial::Serial(string port)
 #endif
 : fd(-1)
@@ -42,10 +51,14 @@ Serial::Serial(string port)
 	if(port.empty())
 		return;
 
-	fd = open(port.c_str(), O_RDWR);
-
-	if(fd < 0) {
-		cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
+#ifdef __GNUC__
+    fd = open(port.c_str(), O_RDWR);
+#elif _MSC_VER
+    errno_t err;
+    err = _sopen_s(&fd, port.c_str(), _O_RDWR, _SH_DENYNO, _S_IREAD | _S_IWRITE);
+#endif
+    if(fd < 0) {
+        cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
 		return;
 	}
 
@@ -59,8 +72,12 @@ Serial::Serial(string port)
 
 Serial::~Serial()
 {
-	if(fd >= 0)
-		close(fd);
+    if(fd >= 0)
+#ifdef __GNUC__
+        close(fd);
+#elif _MSC_VER
+        _close(fd);
+#endif
 }
 
 #ifndef _WIN32
@@ -123,14 +140,14 @@ bool Serial::setParameters()
 
 vector<uint8_t> Serial::write_read(vector<uint8_t> v)
 {
-	unsigned int i;
+    int i;
 	vector<uint8_t> ret;
 
 #ifndef _WIN32
 	write_read_mutex.lock();
 #endif
 	i = write(v);
-	if(i != v.size())
+    if(i != static_cast<int>(v.size()))
 		return vector<uint8_t>();
 	ret = read();
 #ifndef _WIN32
@@ -143,20 +160,24 @@ int Serial::write(const vector<uint8_t> &v)
 {
 	uint16_t crc;
 	vector<uint8_t> data;
-	int size = 2; // + crc(2)
+    int size = 2; // + crc(2)
 
 	crc = genCrc(v);
-	size += v.size();
+    size += static_cast<int>(v.size());
 
 	data.push_back(size & 0xff);
-	data.push_back(size >> 8);
+    data.push_back(static_cast<unsigned char>(size >> 8));
 	data.insert(data.end(), v.begin(), v.end());
 
 	data.push_back(crc & 0xff);
 	data.push_back(crc >> 8);
 
 	// cout << "WRITE(" << dec << data.size() << "): " << b2h(data) << endl;
+#ifdef __GNUC__
 	size = ::write(fd, (const void*)data.data(), (size_t)data.size());
+#elif _MSC_VER
+    size = static_cast<int>(_write(fd, static_cast<const void*>(data.data()), static_cast<unsigned int>(data.size())));
+#endif
 
 	if(size >= 4)
 		size -= 4; // - crc(2) - size(2)
@@ -173,20 +194,28 @@ vector<uint8_t> Serial::read()
 	vector<uint8_t> tmp;
 
 	tmp.resize(2);
+#ifdef __GNUC__
 	size = ::read(fd, tmp.data(), (size_t)tmp.size());
+#elif _MSC_VER
+    size = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
+#endif
 	if(size != 2)
 		return v;
-	size = tmp[0] | tmp[1]<<8;
+    size = static_cast<uint16_t>(tmp[0] | tmp[1]<<8);
 	//cout << "READ(" << dec << size << "): ";
 
 	tmp.clear();
 	tmp.resize(size);
 	while(size != v.size()) {
-		count = ::read(fd, tmp.data(), (size_t)tmp.size());
+#ifdef __GNUC__
+        count = ::read(fd, tmp.data(), (size_t)tmp.size());
+#elif _MSC_VER
+        count = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
+#endif
 		v.insert(v.end(), tmp.begin(), tmp.begin() + count);
 	}
 	// cout << b2h(v) << endl;
-	crc = v[v.size() - 2] | v[v.size() - 1]<<8;
+    crc = static_cast<uint16_t>(v[v.size() - 2] | v[v.size() - 1]<<8);
 	v.erase(v.end() - 2, v.end());
 
 	if(crc != genCrc(v))
@@ -202,9 +231,9 @@ uint16_t Serial::genCrc(vector<uint8_t> v)
 
 	for(unsigned int i = 0; i < v.size(); i++) {
 		b = v[i];
-		b ^= (uint8_t)ret;
-		b ^= (uint8_t)(b << 4);
-		ret = (uint16_t)(((b << 8) | (ret >> 8)) ^ (b >> 4) ^ (b << 3));
+        b ^= static_cast<uint8_t>(ret);
+        b ^= static_cast<uint8_t>(b << 4);
+        ret = static_cast<uint16_t>(((b << 8) | (ret >> 8)) ^ (b >> 4) ^ (b << 3));
 	}
 
 	return ret;

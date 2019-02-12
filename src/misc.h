@@ -1,4 +1,3 @@
-#include <boost/algorithm/hex.hpp>
 #include <string>
 #include <vector>
 
