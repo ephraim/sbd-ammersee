@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
 	qmlRegisterType<FileIO>("MyCustomClasses", 1, 0, "FileIOQML");
 
-	QString port;
+    QString port = "COM5";
 	QCommandLineParser parser;
 	QCommandLineOption portOption(QStringList() << "p" << "port", "RFID-Reader serial port", "port");
 

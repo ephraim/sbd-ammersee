@@ -24,7 +24,7 @@ public slots:
 	void setTagTypes(uint32_t lfTagTypes, uint32_t hiTagTypes) {
 		SimpleProtocolClient::setTagTypes(lfTagTypes, hiTagTypes);
 	}
-	void searchTag() {
+    void startSearchForTag() {
 		QtConcurrent::run(this, &QSimpleProtocolClient::_searchTag);
 	}
 protected:

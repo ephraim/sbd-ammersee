@@ -1,239 +1,99 @@
-#include <iomanip>
-#include <iostream>
-
-#ifdef __GNUC__
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#elif _MSC_VER
-#include <io.h>
-#include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
-#include <share.h>
-#endif
-
 #include "serial.h"
 #include "misc.h"
+#include <iostream>
 
-using namespace std;
-
-#ifndef _WIN32
-bool operator ==(const struct termios &a, const struct termios &b)
+Serial::Serial()
 {
-	if(a.c_iflag != b.c_iflag)
-		return false;
 
-	if(a.c_oflag != b.c_oflag)
-		return false;
-
-	if(a.c_cflag != b.c_cflag)
-		return false;
-
-	if(a.c_lflag != b.c_lflag)
-		return false;
-
-	for(int i = 0; i < NCCS; i++)
-		if(a.c_cc[i] != b.c_cc[i])
-			return false;
-
-	return true;
-}
-#endif
-
-#ifdef __GNUC__
-Serial::Serial(string port, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
-#elif _MSC_VER
-Serial::Serial(string port)
-#endif
-: fd(-1)
-{
-	if(port.empty())
-		return;
-
-#ifdef __GNUC__
-    fd = open(port.c_str(), O_RDWR);
-#elif _MSC_VER
-    errno_t err;
-    err = _sopen_s(&fd, port.c_str(), _O_RDWR, _SH_DENYNO, _S_IREAD | _S_IWRITE);
-#endif
-    if(fd < 0) {
-        cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
-		return;
-	}
-
-#ifndef _WIN32
-	setParameters(baudrate, stop, parity, timeout);
-	write_read_mutex.unlock();
-#else
-	setParameters();
-#endif
 }
 
-Serial::~Serial()
+std::vector<uint8_t> Serial::write_read(const std::vector<uint8_t> &payload)
 {
-    if(fd >= 0)
-#ifdef __GNUC__
-        close(fd);
-#elif _MSC_VER
-        _close(fd);
-#endif
+    size_t i;
+	i = write(payload);
+	if(i != payload.size())
+		return std::vector<uint8_t>();
+
+	return read();
 }
 
-#ifndef _WIN32
-bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
-#else
-bool Serial::setParameters()
-#endif
-{
-#ifdef _WIN32
-	_setmode(fd, _O_BINARY);
-#else
-	struct termios ts;
-	struct termios tmp;
-	speed_t speed = B115200;
-
-	if(fd < 0) {
-		cerr << "ERROR: filedescriptor invalid. Could not set parameters" << endl;
-		return false;
-	}
-
-	switch(baudrate) {
-		case 9600: speed = B9600; break;
-		case 115200: speed = B115200; break;
-		default:
-			cerr << "WARNING: unknown baudrate specified: " << dec << baudrate << ". Using default: 115200" << endl;
-			break;
-	}
-
-	cfmakeraw(&ts);
-	cfsetspeed(&ts, speed);
-
-	if(stop == 2) // two stopbits
-		ts.c_cflag |= CSTOPB;
-	else  // one stopbits
-		ts.c_cflag &= ~CSTOPB;
-
-	if(parity == 1) { // with Even Parity
-		ts.c_cflag |= PARENB;
-		ts.c_cflag &= ~PARODD;
-	}
-	else if(parity == 2) { // with Odd Parity
-		ts.c_cflag |= PARENB;
-		ts.c_cflag |= PARODD;
-	}
-	else { // without any Parity
-		ts.c_cflag &= ~PARENB;
-		ts.c_cflag &= ~PARODD;
-	}
-
-	ts.c_cc[VMIN] = 1;
-	ts.c_cc[VTIME] = timeout * 10; // entity: 1/10 seconds
-
-	if(tcsetattr(fd, TCSAFLUSH, &ts) == 0) {
-		tcgetattr(fd, &tmp);
-		return ts == tmp;
-	}
-#endif
-	return false;
-}
-
-vector<uint8_t> Serial::write_read(vector<uint8_t> v)
-{
-    int i;
-	vector<uint8_t> ret;
-
-#ifndef _WIN32
-	write_read_mutex.lock();
-#endif
-	i = write(v);
-    if(i != static_cast<int>(v.size()))
-		return vector<uint8_t>();
-	ret = read();
-#ifndef _WIN32
-	write_read_mutex.unlock();
-#endif
-	return ret;
-}
-
-int Serial::write(const vector<uint8_t> &v)
+std::vector<uint8_t> Serial::generatePaketData(const std::vector<uint8_t> &payload)
 {
 	uint16_t crc;
-	vector<uint8_t> data;
-    int size = 2; // + crc(2)
+	std::vector<uint8_t> data;
+	int size = 0;
 
-	crc = genCrc(v);
-    size += static_cast<int>(v.size());
+	crc = genCrc(payload);
+	size = 2 + payload.size(); // + crc(2)
 
 	data.push_back(size & 0xff);
-    data.push_back(static_cast<unsigned char>(size >> 8));
-	data.insert(data.end(), v.begin(), v.end());
+	data.push_back(size >> 8);
+	data.insert(data.end(), payload.begin(), payload.end());
 
 	data.push_back(crc & 0xff);
 	data.push_back(crc >> 8);
 
-	// cout << "WRITE(" << dec << data.size() << "): " << b2h(data) << endl;
-#ifdef __GNUC__
-	size = ::write(fd, (const void*)data.data(), (size_t)data.size());
-#elif _MSC_VER
-    size = static_cast<int>(_write(fd, static_cast<const void*>(data.data()), static_cast<unsigned int>(data.size())));
-#endif
+	return data;
+}
 
-	if(size >= 4)
+int Serial::write(const std::vector<uint8_t> &payload)
+{
+	std::vector<uint8_t> data = generatePaketData(payload);
+	int size = 0;
+
+	std::cout << "WRITE(" << std::dec << data.size() << "): " << b2h(data) << std::endl;
+	size = _write(data);
+
+	if(size > 4)
 		size -= 4; // - crc(2) - size(2)
-
+	
 	return size;
 }
 
-vector<uint8_t> Serial::read()
+std::vector<uint8_t> Serial::read()
 {
-	vector<uint8_t> v;
-	uint16_t size = 0;
-	uint16_t count;
+	std::vector<uint8_t> data;
+    size_t size;
 	uint16_t crc;
-	vector<uint8_t> tmp;
+	uint16_t crc2 = 0;
 
-	tmp.resize(2);
-#ifdef __GNUC__
-	size = ::read(fd, tmp.data(), (size_t)tmp.size());
-#elif _MSC_VER
-    size = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
-#endif
-	if(size != 2)
-		return v;
-    size = static_cast<uint16_t>(tmp[0] | tmp[1]<<8);
-	//cout << "READ(" << dec << size << "): ";
+	data = _read();
 
-	tmp.clear();
-	tmp.resize(size);
-	while(size != v.size()) {
-#ifdef __GNUC__
-        count = ::read(fd, tmp.data(), (size_t)tmp.size());
-#elif _MSC_VER
-        count = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
-#endif
-		v.insert(v.end(), tmp.begin(), tmp.begin() + count);
+	if(data.size() < 2)
+		return data;
+
+	size = data[0] | data[1]<<8;
+	if(size != (data.size() - 2)) {
+		std::cout << "retrieved data invalid in size." << std::endl;
+		return std::vector<uint8_t>();
 	}
-	// cout << b2h(v) << endl;
-    crc = static_cast<uint16_t>(v[v.size() - 2] | v[v.size() - 1]<<8);
-	v.erase(v.end() - 2, v.end());
+	std::cout << "READ(" << std::dec << data.size() << "): " << b2h(data) << std::endl;
+	data.erase(data.begin(), data.begin() + 2); // remove size
 
-	if(crc != genCrc(v))
-		return vector<uint8_t>();
+	crc = data[data.size() - 2] | data[data.size() - 1]<<8;
+	data.erase(data.end() - 2, data.end()); // remove crc
 
-	return v;
+	if(data.size() > 0)
+		crc2 = genCrc(data);
+
+	if(crc != crc2) {
+		std::cout << "CRC Error READ(" << std::dec << data.size() << "): " << b2h(data) << std::endl; 
+		return std::vector<uint8_t>();
+	}
+
+	return data;
 }
 
-uint16_t Serial::genCrc(vector<uint8_t> v)
+uint16_t Serial::genCrc(std::vector<uint8_t> v)
 {
 	uint16_t ret = 0xFFFF;
 	uint16_t b;
 
-	for(unsigned int i = 0; i < v.size(); i++) {
+    for(size_t i = 0; i < v.size(); i++) {
 		b = v[i];
-        b ^= static_cast<uint8_t>(ret);
-        b ^= static_cast<uint8_t>(b << 4);
-        ret = static_cast<uint16_t>(((b << 8) | (ret >> 8)) ^ (b >> 4) ^ (b << 3));
+		b ^= (uint8_t)ret;
+		b ^= (uint8_t)(b << 4);
+		ret = (uint16_t)(((b << 8) | (ret >> 8)) ^ (b >> 4) ^ (b << 3));
 	}
 
 	return ret;

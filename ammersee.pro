@@ -1,6 +1,14 @@
 TEMPLATE = app
 
-win32:INCLUDEPATH += c:/Qt/boost_1_69_0
+win32 {
+    SOURCES += src/windows_serial.cpp
+    HEADERS += src/windows_serial.h
+    INCLUDEPATH += "C:\Projekte\boost_1_72_0"
+    DEFINES -= UNICODE _UNICODE
+} else {
+    SOURCES += src/unix_serial.cpp
+    HEADERS += src/unix_serial.h
+}
 
 QT += qml quick widgets concurrent
 
@@ -22,7 +30,6 @@ execute.commands = $$DESTDIR/ammersee
 execute.depends = "$(TARGET)"
 
 QMAKE_EXTRA_TARGETS += execute
-
 
 OBJECTS_DIR = $$DESTDIR/obj
 MOC_DIR = $$DESTDIR/moc

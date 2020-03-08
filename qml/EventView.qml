@@ -46,7 +46,7 @@ Rectangle {
 						spc.switchLED(2, true);
 						spc.beep();
 						spc.onFoundTag.connect(onfoundTag);
-						spc.searchTag();
+                        spc.startSearchForTag();
 						state = "running";
 					}
 					else {
@@ -105,7 +105,7 @@ Rectangle {
 				}
 			});
 		}
-		spc.searchTag();
+        spc.startSearchForTag();
 	}
 
 	Text {
@@ -221,7 +221,7 @@ Rectangle {
 					spc.switchLED(2, true);
 					spc.beep();
 					spc.onFoundTag.connect(onfoundTag);
-					spc.searchTag();
+                    spc.startSearchForTag();
 					root.startZeit = Date.now();
 					root.state = "running";
 					db.transaction(function(tx) {

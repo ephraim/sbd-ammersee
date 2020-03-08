@@ -4,7 +4,11 @@
 #ifndef __SIMPLE_PROTO_H__
 #define __SIMPLE_PROTO_H__
 
-#include "serial.h"
+#ifndef _WIN32
+#include "unix_serial.h"
+#else
+#include "windows_serial.h"
+#endif
 
 using namespace std;
 
@@ -14,7 +18,12 @@ enum SPC_LED {
 	SPC_LED_YELLOW	= 0x04
 };
 
-class SimpleProtocolClient : public Serial
+class SimpleProtocolClient
+#ifndef _WIN32
+: public UnixSerial
+#else
+: public WindowsSerial
+#endif
 {
 public:
 	SimpleProtocolClient(string port);
@@ -26,8 +35,8 @@ public:
 	virtual void blinkLED(enum SPC_LED led, uint16_t timeHI = 0x64, uint16_t timeLO = 0x64);
 	virtual void getTagTypes(uint32_t &lfTagTypes, uint32_t &hiTagTypes);
 	virtual void setTagTypes(uint32_t lfTagTypes, uint32_t hiTagTypes);
-	virtual bool searchTag(vector<uint8_t>& tagID);
+    virtual bool searchTag(vector<uint8_t>& tagID);
 protected:
-	void GPIOConfigureOutputs(uint8_t GPOs, uint8_t PullUpDown, uint8_t OutputType);
+    void GPIOConfigureOutputs(uint8_t GPOs, uint8_t PullUpDown, uint8_t OutputType);
 };
 #endif

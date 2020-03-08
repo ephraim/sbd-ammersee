@@ -1,42 +1,20 @@
-#ifndef _WIN32
-#include <termios.h>
-#include <mutex>
-#else
-#define O_NOCTTY 0
-#endif
-#ifdef __GNUC__
-#include <unistd.h>
-#endif
-#include <stdint.h>
-#include <vector>
 #include <string>
-
-using namespace std;
+#include <vector>
 
 class Serial {
 public:
-#ifndef _WIN32
-	Serial(string port, int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 10);
-#else
-	Serial(string port);
-#endif
-	virtual ~Serial();
+    Serial();
 
-#ifndef _WIN32
-	bool setParameters(int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 10);
-#else
-	bool setParameters();
-#endif
-	vector<uint8_t> write_read(vector<uint8_t> v);
-	uint16_t genCrc(vector<uint8_t> v);
-	bool isOpen() { return fd >= 0; }
+	virtual bool setParameters(int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 20) = 0;
+
+	int write(const std::vector<uint8_t> &payload);
+	std::vector<uint8_t> read();
+	std::vector<uint8_t> write_read(const std::vector<uint8_t> &payload);
+    virtual bool isOpen() = 0;
 
 protected:
-	int write(const vector<uint8_t> &v);
-	vector<uint8_t> read();
-#ifndef _WIN32
-	std::mutex write_read_mutex;
-#endif
-private:
-	int fd;
+	std::vector<uint8_t> generatePaketData(const std::vector<uint8_t> &payload);
+	uint16_t genCrc(std::vector<uint8_t> v);
+	virtual int _write(const std::vector<uint8_t> &data) = 0;
+	virtual std::vector<uint8_t> _read() = 0;
 };

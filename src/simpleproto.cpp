@@ -7,9 +7,9 @@
 
 SimpleProtocolClient::SimpleProtocolClient(string port)
 #ifndef _WIN32
-: Serial(port, 115200, 1, 0, 10)
+: UnixSerial(port)
 #else
-: Serial(port)
+: WindowsSerial(port)
 #endif
 {
 	if(isOpen())

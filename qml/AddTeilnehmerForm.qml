@@ -192,7 +192,7 @@ Rectangle {
 				spc.switchLED(0x02, true);
 				spc.beep();
 				spc.onFoundTag.connect(onFoundTeilnehmerTag);
-				spc.searchTag();
+                spc.startSearchForTag();
 			}
 		}
 	}
