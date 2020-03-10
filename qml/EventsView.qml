@@ -2,13 +2,17 @@ import QtQuick 2.6
 import QtQuick.Controls 1.5
 
 Rectangle {
-	function reloadEventsFromDb(eventname) {
+    id: listParent
+    property alias currentIndex: eventsList.currentIndex
+    property alias events: events
+
+    function reloadEventsFromDb(eventname) {
 		var current = 0;
 		db.transaction(function(tx) {
 			events.clear();
 			var rs = tx.executeSql("SELECT * FROM Event ORDER BY EventName");
 			for(var i = 0; i < rs.rows.length; i++) {
-				if(eventname == rs.rows.item(i).EventName)
+                if(eventname === rs.rows.item(i).EventName)
 					current = events.count;
 				events.append({ eventid: rs.rows.item(i).ID, name: rs.rows.item(i).EventName, startZeit: rs.rows.item(i).Startzeit });
 			}
@@ -32,7 +36,7 @@ Rectangle {
 		clip: true
 		anchors.fill: parent
 		anchors.rightMargin: 5
-		model: events
+        model: events
 		delegate: Component {
 			Item {
 				id: delegate
@@ -141,37 +145,61 @@ Rectangle {
 				font.weight: Font.Bold
 			}
 		}
-	}
-	Rectangle {
-		height: 50
-		anchors.bottom: eventsList.bottom
-		anchors.right: eventsList.right
-		Rectangle {
-			anchors.right: parent.right
-			anchors.bottom: parent.bottom
-			color: "#2c5a85"
-			height: 30
-			radius: 5
-			width: 50
-			Text {
-				anchors.centerIn: parent
-				text: "+"
-				font.pixelSize: 20
-				color: "white"
-			}
-			MouseArea {
-				hoverEnabled: true
-				anchors.fill: parent
-				onClicked: {
-					if(eventsList.currentItem) {
-						eventsList.currentItem.children[1].color = ""
-						eventsList.currentIndex = -1;
-					}
-					showAddEvent();
-				}
-				onEntered: parent.color = "#5c8ab5"
-				onExited: parent.color = "#2c5a85"
-			}
-		}
-	}
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            anchors.rightMargin: 55
+            color: "#2c5a85"
+            height: 30
+            radius: 5
+            width: 50
+            Text {
+                anchors.centerIn: parent
+                text: "-"
+                font.pixelSize: 20
+                color: "white"
+            }
+            MouseArea {
+                hoverEnabled: true
+                anchors.fill: parent
+                onClicked: {
+                    if(eventsList.currentItem) {
+                        var eventName = events.get(eventsList.currentIndex).name
+                        deleteEventDlg.text = "Willst du wirklich das Event \"" + eventName + "\" löschen?"
+                        deleteEventDlg.visible = true
+                    }
+                }
+                onEntered: parent.color = "#5c8ab5"
+                onExited: parent.color = "#2c5a85"
+            }
+        }
+
+        Rectangle {
+            color: "#2c5a85"
+            height: 30
+            radius: 5
+            width: 50
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            Text {
+                anchors.centerIn: parent
+                text: "+"
+                font.pixelSize: 20
+                color: "white"
+            }
+            MouseArea {
+                hoverEnabled: true
+                anchors.fill: parent
+                onClicked: {
+                    if(eventsList.currentItem) {
+                        eventsList.currentItem.children[1].color = ""
+                        eventsList.currentIndex = -1;
+                    }
+                    showAddEvent();
+                }
+                onEntered: parent.color = "#5c8ab5"
+                onExited: parent.color = "#2c5a85"
+            }
+        }
+    }
 }

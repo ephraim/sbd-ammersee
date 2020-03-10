@@ -3,6 +3,7 @@ import QtQuick.Controls 1.5
 import QtQuick.Layouts 1.3
 import QtQml.Models 2.2
 import QtQuick.LocalStorage 2.0
+import QtQuick.Dialogs 1.1
 
 Item {
 	id: root
@@ -75,15 +76,27 @@ Item {
 				anchors.bottom: parent.bottom
 				anchors.margins: 10
 				visible: false
-			}
+            }
+
+            MessageDialog {
+                visible: false
+                id: deleteEventDlg
+                title: "Event löschen?"
+                text: "Should never be visible"
+                standardButtons: StandardButton.Yes | StandardButton.No
+                onAccepted: {
+                    var eventid = eventsView.events.get(eventsView.currentIndex).eventid
+                    console.log("now delete event with id: " + eventid)
+                }
+            }
 
 			states: [
 				State {
 					name: "addEvent"
 					PropertyChanges { target: eventView;	visible: false }
-					PropertyChanges { target: addEventForm;	visible: true }
-				}
-			]
+                    PropertyChanges { target: addEventForm;	visible: true  }
+                }
+            ]
 		}
 	}
 }

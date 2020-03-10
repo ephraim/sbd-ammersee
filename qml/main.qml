@@ -7,7 +7,7 @@ import QtQuick.LocalStorage 2.0
 ApplicationWindow {
 	id: root
 	visible: true
-	visibility: "FullScreen"
+    visibility: "Maximized"
 	title: qsTr("SB Delphin Augsburg 03 - Ammerseeschwimmen")
 	property var db: LocalStorage.openDatabaseSync("schimmen.sqlite", "1.0", "SBDelphin Ammerseeschwimmen Database", 1000000);
 
