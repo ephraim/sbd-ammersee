@@ -6,6 +6,7 @@
 #include "twn4.sys.h"
 #include "qsimpleproto.h"
 #include "fileio.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -15,7 +16,7 @@ int main(int argc, char *argv[])
 
 	qmlRegisterType<FileIO>("MyCustomClasses", 1, 0, "FileIOQML");
 
-    QString port = "COM5";
+    QString port = "";
 	QCommandLineParser parser;
 	QCommandLineOption portOption(QStringList() << "p" << "port", "RFID-Reader serial port", "port");
 
@@ -27,6 +28,10 @@ int main(int argc, char *argv[])
 
 	if (parser.isSet(portOption))
 		port = parser.value(portOption);
+	else {
+		std::cout << "No serial port specified! exiting ..." << std::endl;
+		return 1;
+	}
 
 	QSimpleProtocolClient spc(port);
 	QQmlApplicationEngine engine;
