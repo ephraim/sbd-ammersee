@@ -2,22 +2,38 @@
 
 #include "simpleproto.h"
 #include "misc.h"
+#include <QDebug>
+#include <QThread>
 
 #include "twn4.sys.h"
 
 SimpleProtocolClient::SimpleProtocolClient(string port)
 #ifndef _WIN32
-: Serial(port, 115200, 1, 0, 10)
+: Serial(port, 115200, 1, 0, 20)
 #else
-: Serial(port)
+    : Serial(port, QSerialPort::Baud115200, QSerialPort::OneStop, QSerialPort::NoParity, 25)
 #endif
 {
-	if(isOpen())
+    if(isOpen()) {
+        getVersionString();
 		GPIOConfigureOutputs(REDLED | GREENLED, GPIO_PUPD_NOPULL, GPIO_OTYPE_PUSHPULL); // Led Green => GPIO1 => 0x02, Led Red => GPIO0 => 0x01
+    }
 }
 
 SimpleProtocolClient::~SimpleProtocolClient()
 {
+}
+
+bool SimpleProtocolClient::setCOMParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
+{
+
+    return true;
+}
+
+void SimpleProtocolClient::getVersionString()
+{
+    vector<uint8_t> response;
+    response = write_read({ 0x00, 0x04, 0xFF });
 }
 
 void SimpleProtocolClient::GPIOConfigureOutputs(uint8_t GPOs, uint8_t PullUpDown, uint8_t OutputType)
@@ -78,7 +94,7 @@ void SimpleProtocolClient::getTagTypes(uint32_t &lfTagTypes, uint32_t &hiTagType
 	vector<uint8_t> v;
 	v = write_read({ 0x05, 0x03 });
 
-	cout << "read: " << b2h(v) << endl;
+    qDebug() << "read: " << b2h(v).c_str() << endl;
 	if(v.size() != 9)
 		return;
 
@@ -95,22 +111,28 @@ void SimpleProtocolClient::getTagTypes(uint32_t &lfTagTypes, uint32_t &hiTagType
 bool SimpleProtocolClient::searchTag(vector<uint8_t>& tagID)
 {
 	bool ret;
+    int i;
+
+    vector<uint8_t> v { 0x05, 0x00, 0x28 };
 	vector<uint8_t> response;
 //	uint8_t tagType;
 //	uint8_t bits;
 //	uint8_t bytes;
 
-//	cout << "serching for tag!" << endl;
-#ifndef _WIN32
-	setParameters(115200, 1, 0, 0xFA/10);
-#endif
-	response =  write_read({ 0x05, 0x00, 0x28 });
-#ifndef _WIN32
-	setParameters();
-#endif
+    qDebug() << "serching for tag!" << endl;
+
+    i = write(v);
+    if(i != static_cast<int>(v.size()))
+        return false;
+
+    QThread::sleep(1);
+
+    response = read();
+    if(response.size() == 0)
+        qDebug() << "ERROR: Nothing read!!";
 
 	if(response.size() < 4) {
-//		cout << "none found!" << endl;
+//		qDebug() << "none found!" << endl;
 		return false;
 	}
 
@@ -121,6 +143,6 @@ bool SimpleProtocolClient::searchTag(vector<uint8_t>& tagID)
 	tagID.clear();
 	tagID.insert(tagID.begin(), response.begin() + 5, response.end());
 
-	// cout << "ret: " << (int)ret << ", tagType: 0x" << hex << (int)tagType << ", bits: " << dec << (int)bits << ", bytes: " << dec << (int)bytes << ", tagID: " << b2h(tagID) << endl;
+    // qDebug() << "ret: " << (int)ret << ", tagType: 0x" << hex << (int)tagType << ", bits: " << dec << (int)bits << ", bytes: " << dec << (int)bytes << ", tagID: " << b2h(tagID) << endl;
 	return ret;
 }

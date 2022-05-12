@@ -11,7 +11,8 @@ using namespace std;
 enum SPC_LED {
 	SPC_LED_RED		= 0x01,
 	SPC_LED_GREEN	= 0x02,
-	SPC_LED_YELLOW	= 0x04
+    SPC_LED_YELLOW	= 0x04,
+    SPC_LED_ALL     = 0x07
 };
 
 class SimpleProtocolClient : public Serial
@@ -20,6 +21,7 @@ public:
 	SimpleProtocolClient(string port);
 	virtual ~SimpleProtocolClient();
 
+    bool setCOMParameters(int baudrate = 115200, int stop = 1, int parity = 0, int timeout = 10);
 	virtual void beep(uint8_t volume = 85, uint16_t frequence = 2000, uint16_t ontime = 0x80, uint16_t offtime = 0x80);
 	virtual void diagLEDToggle();
 	virtual void switchLED(enum SPC_LED led, bool on);
@@ -27,6 +29,7 @@ public:
 	virtual void getTagTypes(uint32_t &lfTagTypes, uint32_t &hiTagTypes);
 	virtual void setTagTypes(uint32_t lfTagTypes, uint32_t hiTagTypes);
 	virtual bool searchTag(vector<uint8_t>& tagID);
+    virtual void getVersionString();
 protected:
 	void GPIOConfigureOutputs(uint8_t GPOs, uint8_t PullUpDown, uint8_t OutputType);
 };

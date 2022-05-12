@@ -7,6 +7,12 @@
 #include "qsimpleproto.h"
 #include "fileio.h"
 
+#include <iostream>
+
+#ifdef _WIN32
+#include <QSerialPortInfo>
+#endif
+
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
@@ -27,13 +33,23 @@ int main(int argc, char *argv[])
 
 	if (parser.isSet(portOption))
 		port = parser.value(portOption);
+#ifdef _WIN32
+    else {
+        foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
+            if(info.vendorIdentifier() == 0x09D8 && info.productIdentifier() == 0x0420) {
+                port = info.portName();
+                break;
+            }
+        }
+    }
+#endif
 
 	QSimpleProtocolClient spc(port);
 	QQmlApplicationEngine engine;
 	QQmlContext *cntxt = engine.rootContext();
 	app.setProperty("engine", QVariant::fromValue(&engine));
 
-	spc.setTagTypes(TAGMASK(LFTAG_EM4102), TAGMASK(HFTAG_MIFARE));
+    spc.setTagTypes(0, HFTAG_ISO14443B);
 	cntxt->setContextProperty("spc", &spc);
 	engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 	return app.exec();

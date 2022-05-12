@@ -9,6 +9,9 @@ class QSimpleProtocolClient : public QObject, public SimpleProtocolClient
 public:
 	QSimpleProtocolClient(QString port) : SimpleProtocolClient(port.toStdString()) { };
 public slots:
+    void getVersionString() {
+        SimpleProtocolClient::getVersionString();
+    }
 	void beep(uint8_t volume = 85, uint16_t frequence = 2000, uint16_t ontime = 0x80, uint16_t offtime = 0x80) {
 		SimpleProtocolClient::beep(volume, frequence, ontime, offtime);
 	}

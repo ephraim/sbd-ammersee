@@ -20,11 +20,11 @@ Rectangle {
 	}
 
 	function clear(teilnehmer) {
-		if(teilnehmer == null) {
+        if(teilnehmer === null) {
 			startnummer.entry = 1;
 			db.transaction(function(tx) {
 				var rs = tx.executeSql("select Startnr from Teilnehmer Where Event_ID == '" + eventId + "' Order By Startnr Desc Limit 1")
-				if(rs.rows.length == 1)
+                if(rs.rows.length === 1)
 					startnummer.entry = rs.rows.item(0).Startnr + 1;
 			});
 			vorname.entry = "";
@@ -41,9 +41,9 @@ Rectangle {
 			vorname.entry = teilnehmer.Vorname;
 			nachname.entry = teilnehmer.Nachname;
 			geburtstag.entry = formatGebtagForUser(teilnehmer.Gebtag);
-			rbGenderMale.checked = teilnehmer.Gender == "m";
-			rbGenderFemale.checked = teilnehmer.Gender != "m";
-			cbVisitor.checked = teilnehmer.Visitor != 0;
+            rbGenderMale.checked = teilnehmer.Gender === "m";
+            rbGenderFemale.checked = teilnehmer.Gender !== "m";
+            cbVisitor.checked = teilnehmer.Visitor !== 0;
 			tagId.text = teilnehmer.IDTAG;
 			teilnehmerID = teilnehmer.ID;
 		}

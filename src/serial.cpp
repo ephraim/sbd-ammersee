@@ -1,11 +1,12 @@
 #include <iomanip>
 #include <iostream>
+#include <QDebug>
 
-#ifdef __GNUC__
+#ifndef _WIN32
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#elif _MSC_VER
+#else
 #include <io.h>
 #include <fcntl.h>
 #include <sys\types.h>
@@ -15,6 +16,7 @@
 
 #include "serial.h"
 #include "misc.h"
+#include <QSerialPortInfo>
 
 using namespace std;
 
@@ -41,54 +43,54 @@ bool operator ==(const struct termios &a, const struct termios &b)
 }
 #endif
 
-#ifdef __GNUC__
 Serial::Serial(string port, int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
-#elif _MSC_VER
-Serial::Serial(string port)
-#endif
+#ifndef _WIN32
 : fd(-1)
+#endif
 {
 	if(port.empty())
 		return;
 
-#ifdef __GNUC__
-    fd = open(port.c_str(), O_RDWR);
-#elif _MSC_VER
-    errno_t err;
-    err = _sopen_s(&fd, port.c_str(), _O_RDWR, _SH_DENYNO, _S_IREAD | _S_IWRITE);
-#endif
-    if(fd < 0) {
-        cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
-		return;
-	}
-
 #ifndef _WIN32
-	setParameters(baudrate, stop, parity, timeout);
-	write_read_mutex.unlock();
+    fd = open(port.c_str(), O_RDWR);
 #else
-	setParameters();
+    serialport.setPort(QSerialPortInfo(QString(port.c_str())));
+    if(!setParameters(baudrate, stop, parity, timeout)) {
+        cerr << "ERROR: failed to set the parameters." << endl;
+        return;
+    }
+
+    serialport.open(QIODevice::ReadWrite);
+#endif
+    if(!isOpen()) {
+        cerr << "ERROR: could not open " << port << ". Error: " << hex << setw(8) << setfill('0') << errno << endl;
+        return;
+    }
+
+}
+
+bool Serial::isOpen()
+{
+#ifndef _WIN32
+    return fd >= 0;
+#else
+    return serialport.isOpen();
 #endif
 }
 
 Serial::~Serial()
 {
+#ifndef _WIN32
     if(fd >= 0)
-#ifdef __GNUC__
         close(fd);
-#elif _MSC_VER
-        _close(fd);
+#else
+    serialport.close();
 #endif
 }
 
-#ifndef _WIN32
 bool Serial::setParameters(int baudrate/* = 115200*/, int stop/* = 1*/, int parity/* = 0*/, int timeout/* = 10*/)
-#else
-bool Serial::setParameters()
-#endif
 {
-#ifdef _WIN32
-	_setmode(fd, _O_BINARY);
-#else
+#ifndef _WIN32
 	struct termios ts;
 	struct termios tmp;
 	speed_t speed = B115200;
@@ -134,8 +136,18 @@ bool Serial::setParameters()
 		tcgetattr(fd, &tmp);
 		return ts == tmp;
 	}
+#else
+    if(!serialport.setDataBits(QSerialPort::Data8))
+        return false;
+    if(!serialport.setBaudRate((qint32)baudrate))
+        return false;
+    if(!serialport.setStopBits((QSerialPort::StopBits)stop))
+        return false;
+    if(!serialport.setParity((QSerialPort::Parity)parity))
+        return false;
+    this->timeout = timeout * 100;
 #endif
-	return false;
+    return true;
 }
 
 vector<uint8_t> Serial::write_read(vector<uint8_t> v)
@@ -143,44 +155,44 @@ vector<uint8_t> Serial::write_read(vector<uint8_t> v)
     int i;
 	vector<uint8_t> ret;
 
-#ifndef _WIN32
 	write_read_mutex.lock();
-#endif
 	i = write(v);
     if(i != static_cast<int>(v.size()))
 		return vector<uint8_t>();
 	ret = read();
-#ifndef _WIN32
+    if(ret.size() == 0)
+        qDebug() << "ERROR: Nothing read!!";
 	write_read_mutex.unlock();
-#endif
 	return ret;
 }
 
 int Serial::write(const vector<uint8_t> &v)
 {
-	uint16_t crc;
+    uint16_t crc;
 	vector<uint8_t> data;
     int size = 2; // + crc(2)
 
-	crc = genCrc(v);
+    crc = genCrc(v);
     size += static_cast<int>(v.size());
 
-	data.push_back(size & 0xff);
+    data.push_back(size & 0xff);
     data.push_back(static_cast<unsigned char>(size >> 8));
 	data.insert(data.end(), v.begin(), v.end());
 
-	data.push_back(crc & 0xff);
-	data.push_back(crc >> 8);
+    data.push_back(crc & 0xff);
+    data.push_back(crc >> 8);
 
-	// cout << "WRITE(" << dec << data.size() << "): " << b2h(data) << endl;
-#ifdef __GNUC__
+    qDebug() << "WRITE(" << (int)data.size() << "): " << b2h(data).c_str() << endl;
+#ifndef _WIN32
 	size = ::write(fd, (const void*)data.data(), (size_t)data.size());
-#elif _MSC_VER
-    size = static_cast<int>(_write(fd, static_cast<const void*>(data.data()), static_cast<unsigned int>(data.size())));
+#else
+    size = serialport.write((const char*)data.data(), data.size());
+    if(!serialport.waitForBytesWritten(timeout))
+        return -1;
 #endif
 
-	if(size >= 4)
-		size -= 4; // - crc(2) - size(2)
+    if(size >= 4)
+        size -= 4; // - crc(2) - size(2)
 
 	return size;
 }
@@ -189,32 +201,50 @@ vector<uint8_t> Serial::read()
 {
 	vector<uint8_t> v;
 	uint16_t size = 0;
-	uint16_t count;
 	uint16_t crc;
-	vector<uint8_t> tmp;
+    vector<uint8_t> tmp;
 
-	tmp.resize(2);
-#ifdef __GNUC__
-	size = ::read(fd, tmp.data(), (size_t)tmp.size());
-#elif _MSC_VER
-    size = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
-#endif
-	if(size != 2)
-		return v;
+
+#ifndef _WIN32
+    uint16_t count = 0;
+    tmp.resize(2);
+    size = ::read(fd, tmp.data(), (size_t)tmp.size());
+    if(size < 2)
+        return v;
     size = static_cast<uint16_t>(tmp[0] | tmp[1]<<8);
-	//cout << "READ(" << dec << size << "): ";
 
-	tmp.clear();
-	tmp.resize(size);
-	while(size != v.size()) {
-#ifdef __GNUC__
+    tmp.clear();
+    tmp.resize(size);
+    while(size != v.size()) {
         count = ::read(fd, tmp.data(), (size_t)tmp.size());
-#elif _MSC_VER
-        count = static_cast<uint16_t>(_read(fd, tmp.data(), static_cast<unsigned int>(tmp.size())));
+        v.insert(v.end(), tmp.begin(), tmp.begin() + count);
+    }
+#else
+    serialport.setReadBufferSize(1);
+    while(tmp.size() < 2) {
+        char d;
+        if(serialport.read(&d, 1) == 1)
+            tmp.push_back(d);
+        else {
+            if(!serialport.bytesAvailable() && !serialport.waitForReadyRead())
+                return v;
+        }
+    }
+
+    size = static_cast<uint16_t>(tmp[0] | tmp[1]<<8);
+
+    while(size != v.size()) {
+        char d;
+        if(serialport.read(&d, 1) == 1)
+            v.push_back(d);
+        else {
+            if(!serialport.bytesAvailable() && !serialport.waitForReadyRead())
+                return v;
+        }
+    }
 #endif
-		v.insert(v.end(), tmp.begin(), tmp.begin() + count);
-	}
-	// cout << b2h(v) << endl;
+
+    qDebug() << "READ(" << (int)size << "): " << b2h(v).c_str() << endl;
     crc = static_cast<uint16_t>(v[v.size() - 2] | v[v.size() - 1]<<8);
 	v.erase(v.end() - 2, v.end());
 

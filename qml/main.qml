@@ -7,11 +7,12 @@ import QtQuick.LocalStorage 2.0
 ApplicationWindow {
 	id: root
 	visible: true
-	visibility: "FullScreen"
+    //visibility: "FullScreen"
 	title: qsTr("SB Delphin Augsburg 03 - Ammerseeschwimmen")
 	property var db: LocalStorage.openDatabaseSync("schimmen.sqlite", "1.0", "SBDelphin Ammerseeschwimmen Database", 1000000);
 
 	Component.onCompleted: {
+        spc.getVersionString();
 		db.transaction(function(tx) {
 			tx.executeSql("CREATE TABLE IF NOT EXISTS 'Teilnehmer' ('ID' INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 'Vorname' TEXT, 'Nachname' TEXT, 'Gebtag' TEXT, 'Startnr' INTEGER, 'Gender' TEXT, 'Visitor' BOOLEAN, 'IDTAG' TEXT, 'Event_ID' INTEGER, 'Endzeit' INTEGER DEFAULT 0);");
 			tx.executeSql("CREATE TABLE IF NOT EXISTS 'Event' ('ID' INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, 'EventName' TEXT, 'Startzeit' INTEGER DEFAULT 0, 'Endzeit' INTEGER DEFAULT 0);");

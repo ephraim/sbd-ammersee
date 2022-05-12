@@ -1,11 +1,11 @@
 TEMPLATE = app
 
-win32:INCLUDEPATH += c:/Qt/boost_1_69_0
+win32:INCLUDEPATH += C:/Projekte/boost_1_72_0
 
 QT += qml quick widgets concurrent
+QT += serialport
 
-CONFIG += c++11
-CONFIG -= debug
+CONFIG += c++17 debug
 
 SOURCES += src/main.cpp src/serial.cpp src/simpleproto.cpp src/misc.cpp src/fileio.cpp
 HEADERS += src/serial.h src/simpleproto.h src/qsimpleproto.h src/misc.h src/twn4.sys.h src/fileio.h
